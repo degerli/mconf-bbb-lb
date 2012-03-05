@@ -1,3 +1,6 @@
+var fs = require('fs')
+  , Server = require('./server');
+
 // TODO: Temporary data store
 var db = {};
 
@@ -39,3 +42,20 @@ Meeting.destroy = function(id, fn){
     fn(new Error('meeting ' + id + ' does not exist'));
   }
 };
+
+// Loads a json into the local database
+// For DEVELOPMENT only
+Meeting.fromJson = function(path){
+  try {
+    var fileContents = fs.readFileSync(path, 'utf8');
+    var json = JSON.parse(fileContents);
+    for(var idx in json){
+      var s = new Server(json[idx].server.url, json[idx].server.salt);
+      var m = new Meeting(json[idx].id, s);
+      m.save();
+    }
+
+    console.log('Loaded data from ' + path);
+    console.log('Meetings: ' + JSON.stringify(db));
+  } catch (e) { }
+}

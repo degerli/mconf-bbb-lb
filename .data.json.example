@@ -1,0 +1,13 @@
+[
+  {
+  "id":"123",
+  "server":{
+    "url":"http://test.com",
+    "salt":"1234567890abcdefghijkl" }
+  },{
+  "id":"abc",
+  "server":{
+    "url":"http://test.com",
+    "salt":"1234567890abcdefghijkl"}
+  }
+]
