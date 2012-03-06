@@ -2,7 +2,8 @@ var url = require('url')
   , Meeting = require('../models/meeting')
   , Nagios = require('../models/nagios')
   , LoadBalancer = require('../models/load_balancer')
-  , Logger = require('../lib/logger');
+  , Logger = require('../lib/logger')
+  , config = require('../config');
 
 exports.index = function(req, res){
   res.render('index', { title: 'Mconf - BigBlueButton Load Balancer' })
@@ -23,8 +24,8 @@ exports.create = function(req, res){
     if (!meeting) {
       Logger.log('failed to load meeting', m_id);
 
-      var servers = Nagios.get_servers();
-      var server = LoadBalancer.select_server(servers);
+      var servers = Nagios.getServers();
+      var server = LoadBalancer.selectServer(servers);
       meeting = new Meeting(m_id, server);
       meeting.save();
     }

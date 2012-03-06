@@ -1,0 +1,10 @@
+var config = {}
+
+// Private information: this file is not public in the github repo to store
+// private information
+
+config.nagios = {};
+config.nagios.username = 'username';
+config.nagios.password = 'password';
+
+module.exports = config;

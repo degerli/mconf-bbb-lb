@@ -3,3 +3,4 @@
 *.log
 node_modules/
 .data.json
+config_local.js

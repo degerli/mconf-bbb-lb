@@ -1,12 +1,13 @@
 var url = require('url')
   , Logger = require('../lib/logger')
-  , sha1 = require('sha1');
+  , sha1 = require('sha1')
+  , config = require('../config');
 
 var LoadBalancer = exports;
 
 // Selects the adequate BigBlueButton server for a new meeting
 // to be created
-LoadBalancer.select_server = function(servers){
+LoadBalancer.selectServer = function(servers){
   Logger.log('selecting a server for a new meeting');
   // TODO: select one
   return servers[0];
@@ -24,8 +25,8 @@ LoadBalancer.redirect = function(req, res, server){
   }
 
   // calculates the new checksum
-  method = urlObj.pathname.substr('/bigbluebutton/api/'.length);
-  query = url.format(urlObj).substr(urlObj.pathname.length + 1); // + the '?'
+  method = urlObj.pathname.substr((config.bbb.api_path + '/').length);
+  query = url.format(urlObj).substr(urlObj.pathname.length + 1); // +1 for the '?'
   salt = server.salt;
   checksum = sha1(method + query + salt)
 

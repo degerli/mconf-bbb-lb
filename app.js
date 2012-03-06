@@ -5,7 +5,9 @@
 
 var express = require('express')
   , routes = require('./routes')
-  , Meeting = require('./models/meeting');
+  , Meeting = require('./models/meeting')
+  , config = require('./config')
+  , Nagios = require('./models/nagios');
 
 var app = module.exports = express.createServer();
 
@@ -31,12 +33,14 @@ app.configure('production', function(){
   app.use(express.errorHandler());
 });
 
-// Routes
+// Start the integration with nagios
+Nagios.startup(config.nagios);
 
+// Routes
 app.get('/', routes.index);
-app.get('/bigbluebutton/api', routes.api_index);
-app.get('/bigbluebutton/api/create', routes.create); // 'create' api method
-app.get('/bigbluebutton/api/*', routes.redirect);    // anything else
+app.get(config.bbb.api_path, routes.api_index);
+app.get(config.bbb.api_path + '/create', routes.create); // 'create' api method
+app.get(config.bbb.api_path + '/*', routes.redirect);    // anything else
 
 app.listen(3000);
 console.log("Express server listening on port %d in %s mode", app.address().port, app.settings.env);
