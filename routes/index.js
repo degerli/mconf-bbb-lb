@@ -1,7 +1,7 @@
 var url = require('url')
   , Meeting = require('../models/meeting')
-  , Nagios = require('../models/nagios')
-  , LoadBalancer = require('../models/load_balancer')
+  , Nagios = require('../lib/nagios')
+  , LoadBalancer = require('../lib/load_balancer')
   , Logger = require('../lib/logger')
   , config = require('../config');
 
@@ -24,8 +24,7 @@ exports.create = function(req, res){
     if (!meeting) {
       Logger.log('failed to load meeting', m_id);
 
-      var servers = Nagios.getServers();
-      var server = LoadBalancer.selectServer(servers);
+      var server = LoadBalancer.selectServer();
       meeting = new Meeting(m_id, server);
       meeting.save();
     }

@@ -7,7 +7,7 @@ var express = require('express')
   , routes = require('./routes')
   , Meeting = require('./models/meeting')
   , config = require('./config')
-  , Nagios = require('./models/nagios');
+  , Nagios = require('./lib/nagios');
 
 var app = module.exports = express.createServer();
 
