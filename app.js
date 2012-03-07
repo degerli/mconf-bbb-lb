@@ -7,7 +7,8 @@ var express = require('express')
   , routes = require('./routes')
   , Meeting = require('./models/meeting')
   , config = require('./config')
-  , Nagios = require('./lib/nagios');
+  , Nagios = require('./lib/nagios')
+  , Logger = require('./lib/logger');
 
 var app = module.exports = express.createServer();
 
@@ -43,4 +44,4 @@ app.get(config.bbb.api_path + '/create', routes.create); // 'create' api method
 app.get(config.bbb.api_path + '/*', routes.redirect);    // anything else
 
 app.listen(3000);
-console.log("Express server listening on port %d in %s mode", app.address().port, app.settings.env);
+Logger.log("Express server listening on port %d in %s mode", app.address().port, app.settings.env);

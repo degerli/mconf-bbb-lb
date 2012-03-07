@@ -55,7 +55,7 @@ Meeting.fromJson = function(path){
       m.save();
     }
 
-    console.log('Loaded data from ' + path);
-    console.log('Meetings: ' + JSON.stringify(db));
+    Logger.log('loaded data from ' + path);
+    Logger.log('meetings loaded: ' + JSON.stringify(db));
   } catch (e) { }
 }

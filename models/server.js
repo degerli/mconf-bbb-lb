@@ -1,4 +1,5 @@
-var Service = require('./service');
+var Service = require('./service')
+  , Logger = require('../lib/logger');
 
 // TODO: Temporary data store
 var db = {};
@@ -22,13 +23,29 @@ Server.prototype.destroy = function(fn){
 Server.prototype.updateService = function(name, data, fn){
   service = this.services[name];
   if (service == undefined) {
-    service = new Service();
-    service.name = name;
-    service.data = data;
+    service = new Service(name, data);
   }
   this.services[name] = service;
   if (fn) fn(null, service);
 };
+
+// Get the number of meetings in the server from one of its
+// services
+Server.prototype.getMeetingCount = function() {
+  var service = this.services['BigBlueButton Info']
+    , count = 0;
+
+  if (service != undefined) {
+    try {
+      // ex: "meetings=2;5;10;0; ..."
+      count = parseInt(service.data.match(/meetings=(\d+);/)[1]);
+    } catch (e) {
+      Logger.log('ERROR getting the number of meetings from: ' + service.data)
+    }
+  }
+
+  return count;
+}
 
 Server.count = function(fn){
   fn(null, Object.keys(db).length);
