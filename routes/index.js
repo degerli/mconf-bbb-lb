@@ -65,7 +65,7 @@ exports.create = function(req, res){
       meeting.save();
     }
 
-    Logger.log('successfully loadded meeting', m_id);
+    Logger.log('successfully loaded meeting', m_id);
     Logger.log('server selected ' + meeting.server.url, m_id);
 
     LoadBalancer.redirect(req, res, meeting.server);

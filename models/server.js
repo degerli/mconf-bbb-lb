@@ -5,19 +5,19 @@ var Service = require('./service')
 var db = {};
 
 var Server = exports = module.exports = function Server(name, url, salt) {
-  this.id = name;
+  this.name = name;
   this.url = url;
   this.salt = salt;
   this.services = {};
 };
 
 Server.prototype.save = function(fn){
-  db[this.id] = this;
+  db[this.name] = this;
   if (fn) fn();
 };
 
 Server.prototype.destroy = function(fn){
-  exports.destroy(this.id, fn);
+  exports.destroy(this.name, fn);
 };
 
 Server.prototype.updateService = function(name, data, fn){
@@ -29,22 +29,37 @@ Server.prototype.updateService = function(name, data, fn){
   if (fn) fn(null, service);
 };
 
-// Get the number of meetings in the server from one of its
-// services
+// Get the number of meetings in the server from the service
+// BigBlueButton Info
 Server.prototype.getMeetingCount = function() {
+  var service = this.services['BigBlueButton Info']
+    , count = -1; // -1 disables this server
+
+  if (service != undefined) {
+    try {
+      count = service.getInt('meetings');
+    } catch (e) {
+      Logger.log('ERROR: server ' + this.name + ', getting the number of meetings from: "' + service.data + '"')
+    }
+  }
+
+  return count;
+}
+
+// Inc the number of meetings described in the service
+// BigBlueButton Info
+Server.prototype.incMeetingCount = function(value) {
   var service = this.services['BigBlueButton Info']
     , count = 0;
 
   if (service != undefined) {
     try {
-      // ex: "meetings=2;5;10;0; ..."
-      count = parseInt(service.data.match(/meetings=(\d+);/)[1]);
+      count = service.getInt('meetings');
+      service.setInt('meetings', count + 1);
     } catch (e) {
-      Logger.log('ERROR getting the number of meetings from: ' + service.data)
+      Logger.log('ERROR: server ' + this.name + ', setting the number of meetings in: "' + service.data + '"')
     }
   }
-
-  return count;
 }
 
 Server.count = function(fn){
