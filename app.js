@@ -43,11 +43,11 @@ app.all('*', function(req, res, next){ // simple request logger
   next();
 });
 app.get('/', routes.index);
-app.get(config.bbb.api_path, routes.api_index);
-app.get(config.bbb.api_path + '/create', routes.create); // 'create' api method
-app.get(config.bbb.api_path + '/join', routes.join);     // 'join' api method
-app.get(config.bbb.api_path + '/*', routes.anything);    // anything other api method
-// TODO: treat getMeetings
+app.get(config.bbb.api_path, routes.apiIndex);
+app.get(config.bbb.api_path + '/create', routes.create);
+app.get(config.bbb.api_path + '/join', routes.join);
+app.get(config.bbb.api_path + '/getMeetings', routes.getMeetings);
+app.get(config.bbb.api_path + '/*', routes.anything); // any other api method
 // TODO: treat getRecordings
 
 app.listen(config.lb.port);

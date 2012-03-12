@@ -21,7 +21,13 @@ config.bbb.responses.checksumError =
      <messageKey>checksumError</messageKey> \
      <message>You did not pass the checksum security check</message> \
    </response>';
-config.bbb.responses.invalidMeeting =
+config.bbb.responses.apiIndex =
+   '<response> \
+      <returncode>SUCCESS</returncode> \
+      <version>0.8</version> \
+      <name>mconf-bbb-lb</name> \
+    </response>';
+config.bbb.responses.invalidMeeting = // only used when there are no servers registered
   '<response> \
      <returncode>FAILED</returncode> \
      <messageKey>invalidMeetingIdentifier</messageKey> \

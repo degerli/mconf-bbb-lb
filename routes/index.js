@@ -1,11 +1,13 @@
-var url = require('url')
+var LoadBalancer = require('../lib/load_balancer')
+  , Logger = require('../lib/logger')
   , Meeting = require('../models/meeting')
   , Nagios = require('../lib/nagios')
-  , LoadBalancer = require('../lib/load_balancer')
-  , Logger = require('../lib/logger')
+  , Server = require('../models/server')
   , Utils = require('../lib/utils')
+  , config = require('../config')
+  , request = require('request')
   , sha1 = require('sha1')
-  , config = require('../config');
+  , url = require('url');
 
 
 // HELPERS
@@ -85,8 +87,9 @@ exports.index = function(req, res){
 };
 
 // BBB api index
-exports.api_index = function(req, res){
-  res.render('index', { title: 'Mconf - BigBlueButton Load Balancer - Api Index' })
+exports.apiIndex = function(req, res){
+  res.contentType('xml');
+  res.send(config.bbb.responses.apiIndex);
 };
 
 // Routing a 'create' request
@@ -115,17 +118,58 @@ exports.create = function(req, res){
   });
 };
 
-// Routing any request that simply needs to be passed to a BBB server
-exports.anything = function(req, res){
-  exports.basicHandler(req, res, function(meeting) {
-    LoadBalancer.handle(req, res, meeting.server, config.lb.proxy);
-  });
-};
-
 // Routing a 'join' request
 exports.join = function(req, res){
   exports.basicHandler(req, res, function(meeting) {
     // always redirect, never proxy
     LoadBalancer.handle(req, res, meeting.server, false);
+  });
+};
+
+// Routing a 'getMeetings' request
+exports.getMeetings = function(req, res){
+  var server
+    , id
+    , responses = 0
+    , count = 0;
+
+  if (!exports.validateChecksum(req, res)) return;
+
+  Server.count(function(err, c) { count = c; });
+
+  // send a getMeetings to each server and concatenate the responses
+  Server.all(function(err, servers) {
+    for (id in servers) {
+      server = servers[id];
+
+      opt = { url: LoadBalancer.changeServerInUrl(req.url, server) }
+      Logger.log('sending getMeetings to ' + opt['url']);
+      request(opt, function(error, response, body) {
+        responses++;
+
+        if (error) {
+          Logger.log('error calling getMeetings to ' + server.name + ': ' + error);
+        } else {
+          // TODO: parse the response and concatenate the servers
+          Logger.log('got the response to getMeetings from ' + server.name + ':');
+          Logger.log(body);
+        }
+
+        // got all the responses, send to the user
+        if (responses == count) {
+          res.contentType('xml');
+          res.send(body);
+        }
+
+      });
+
+    }
+  });
+};
+
+// Routing any request that simply needs to be passed to a BBB server
+exports.anything = function(req, res){
+  exports.basicHandler(req, res, function(meeting) {
+    LoadBalancer.handle(req, res, meeting.server, config.lb.proxy);
   });
 };
