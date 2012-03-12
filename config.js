@@ -1,6 +1,9 @@
 // NOTE: See config_local.js for local private configurations.
 var config = require('./config_local');
 
+config.lb.port = 3000;
+config.lb.proxy = true;
+
 config.nagios = config.nagios || {};
 config.nagios.url = 'http://143.54.12.174/nagios';
 config.nagios.api_path = '/cgi-bin/status-json.cgi';

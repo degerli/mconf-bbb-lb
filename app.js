@@ -38,10 +38,17 @@ app.configure('production', function(){
 Nagios.startup(config.nagios);
 
 // Routes
+app.all('*', function(req, res, next){ // simple request logger
+  Logger.log('request to ' + req.url);
+  next();
+});
 app.get('/', routes.index);
 app.get(config.bbb.api_path, routes.api_index);
 app.get(config.bbb.api_path + '/create', routes.create); // 'create' api method
-app.get(config.bbb.api_path + '/*', routes.redirect);    // anything else
+app.get(config.bbb.api_path + '/join', routes.join);     // 'join' api method
+app.get(config.bbb.api_path + '/*', routes.anything);    // anything other api method
+// TODO: treat getMeetings
+// TODO: treat getRecordings
 
-app.listen(3000);
-Logger.log("Express server listening on port %d in %s mode", app.address().port, app.settings.env);
+app.listen(config.lb.port);
+console.log("Express server listening on port %d in %s mode", app.address().port, app.settings.env);

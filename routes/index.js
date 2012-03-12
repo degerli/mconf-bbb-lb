@@ -7,13 +7,8 @@ var url = require('url')
   , sha1 = require('sha1')
   , config = require('../config');
 
-exports.index = function(req, res){
-  res.render('index', { title: 'Mconf - BigBlueButton Load Balancer' })
-};
 
-exports.api_index = function(req, res){
-  res.render('index', { title: 'Mconf - BigBlueButton Load Balancer - Api Index' })
-};
+// HELPERS
 
 // Validates the checksum in the request 'req'.
 // If it doesn't match the expected checksum, we'll send
@@ -38,12 +33,60 @@ exports.validateChecksum = function(req, res){
 
   // matches the checksum
   if (checksum != correctChecksum) {
-    Logger.log('checksum check failed, sending a checksumError response', m_id);
+    Logger.log('checksum check failed, sending a checksumError response');
     res.contentType('xml');
     res.send(config.bbb.responses.checksumError);
     return false;
   }
   return true;
+};
+
+// Basic handler that tries to find the meeting using the meetingID provided
+// in the request and checks the checksum. If the meeting is not found or the
+// checksum is incorrect it responds with an error.
+// Otherwise it calls the callback 'fn'.
+exports.basicHandler = function(req, res, fn){
+  if (!exports.validateChecksum(req, res)) return;
+
+  urlObj = url.parse(req.url, true);
+  var m_id = urlObj.query['meetingID'];
+  Logger.log(urlObj.pathname + ' request with: ' + JSON.stringify(urlObj.query), m_id);
+
+  Meeting.get(m_id, function(err, meeting){
+    if (!meeting) {
+      Logger.log('failed to find meeting', m_id);
+
+      // we'll use the default server to get a proper anwser from BBB
+      // usually it will be an XML with an error code
+      LoadBalancer.defaultServer(function(server) {
+        if (server != undefined) {
+          Logger.log('redirecting to the default server ' + server.name, m_id);
+          LoadBalancer.handle(req, res, server, config.lb.proxy);
+        } else {
+          Logger.log('there\'s no default server, sending an invalidMeeting response', m_id);
+          res.contentType('xml');
+          res.send(config.bbb.responses.invalidMeeting);
+        }
+      });
+
+      return false;
+    }
+
+    fn(meeting);
+  });
+};
+
+
+// ROUTES HANDLERS
+
+// General index
+exports.index = function(req, res){
+  res.render('index', { title: 'Mconf - BigBlueButton Load Balancer' })
+};
+
+// BBB api index
+exports.api_index = function(req, res){
+  res.render('index', { title: 'Mconf - BigBlueButton Load Balancer - Api Index' })
 };
 
 // Routing a 'create' request
@@ -68,26 +111,21 @@ exports.create = function(req, res){
     Logger.log('successfully loaded meeting', m_id);
     Logger.log('server selected ' + meeting.server.url, m_id);
 
-    LoadBalancer.redirect(req, res, meeting.server);
+    LoadBalancer.handle(req, res, meeting.server, config.lb.proxy);
   });
 };
 
-// Routing any request that simply needs to be redirected to a BBB server
-exports.redirect = function(req, res){
-  if (!exports.validateChecksum(req, res)) return;
+// Routing any request that simply needs to be passed to a BBB server
+exports.anything = function(req, res){
+  exports.basicHandler(req, res, function(meeting) {
+    LoadBalancer.handle(req, res, meeting.server, config.lb.proxy);
+  });
+};
 
-  urlObj = url.parse(req.url, true);
-  var m_id = urlObj.query['meetingID'];
-  Logger.log(urlObj.pathname + ' request with: ' + JSON.stringify(urlObj.query), m_id);
-
-  Meeting.get(m_id, function(err, meeting){
-    if (!meeting) {
-      Logger.log('failed to load meeting, sending an invalidMeeting response', m_id);
-      res.contentType('xml');
-      res.send(config.bbb.responses.invalidMeeting);
-      return false;
-    }
-
-    LoadBalancer.redirect(req, res, meeting.server);
+// Routing a 'join' request
+exports.join = function(req, res){
+  exports.basicHandler(req, res, function(meeting) {
+    // always redirect, never proxy
+    LoadBalancer.handle(req, res, meeting.server, false);
   });
 };

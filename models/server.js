@@ -70,6 +70,15 @@ Server.get = function(id, fn){
   fn(null, db[id]);
 };
 
+Server.first = function(fn){
+  var keys = Object.keys(db);
+  if (keys.length > 0) {
+    fn(null, db[keys[0]]);
+  } else {
+    fn(null, undefined);
+  }
+};
+
 Server.all = function(fn){
   var arr = Object.keys(db).reduce(function(arr, id){
     arr.push(db[id]);
