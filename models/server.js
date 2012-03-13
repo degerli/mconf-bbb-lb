@@ -90,9 +90,9 @@ Server.all = function(fn){
 Server.destroy = function(id, fn){
   if (db[id]) {
     delete db[id];
-    fn();
+    if (fn) fn();
   } else {
-    fn(new Error('server ' + id + ' does not exist'));
+    if (fn) fn(new Error('server ' + id + ' does not exist'));
   }
 };
 
