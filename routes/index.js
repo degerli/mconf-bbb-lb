@@ -118,33 +118,32 @@ exports.join = function(req, res){
 exports.getMeetings = function(req, res){
   var server
     , id
-    , responses = 0
+    , responses = []
     , count = 0;
 
   Server.count(function(err, c) { count = c; });
 
-  // send a getMeetings to each server and concatenate the responses
+  // send a getMeetings to each registered server and concatenate the responses
   Server.all(function(err, servers) {
     for (id in servers) {
       server = servers[id];
 
       opt = { url: LoadBalancer.changeServerInUrl(req.url, server) }
       Logger.log('sending getMeetings to ' + opt['url']);
-      request(opt, function(error, response, body) {
-        responses++;
-
+      request(opt, function(error, res2, body) {
+        // TODO: how to find out from which server is this response?
         if (error) {
-          Logger.log('error calling getMeetings to ' + server.name + ': ' + error);
+          Logger.log('error calling getMeetings: ' + error);
+          responses.push(null);
         } else {
-          // TODO: parse the response and concatenate the servers
-          Logger.log('got the response to getMeetings from ' + server.name + ':');
-          Logger.log(body);
+          responses.push(body);
         }
 
         // got all the responses, send to the user
-        if (responses == count) {
+        if (responses.length == count) {
+          xml = BigBlueButton.concatenateGetMeetings(responses);
           res.contentType('xml');
-          res.send(body);
+          res.send(xml);
         }
 
       });
