@@ -44,6 +44,11 @@ app.all('*', function(req, res, next){ // simple request logger
 });
 app.get('/', routes.index);
 app.get(config.bbb.api_path, routes.apiIndex);
+app.all(config.bbb.api_path + '/*', function(req, res, next){ // checksum checker
+  if (routes.validateChecksum(req, res)) {
+    next();
+  }
+});
 app.get(config.bbb.api_path + '/create', routes.create);
 app.get(config.bbb.api_path + '/join', routes.join);
 app.get(config.bbb.api_path + '/getMeetings', routes.getMeetings);

@@ -1,4 +1,7 @@
-var LoadBalancer = require('../lib/load_balancer')
+// Router module
+
+var BigBlueButton = require('../lib/bigbluebutton')
+  , LoadBalancer = require('../lib/load_balancer')
   , Logger = require('../lib/logger')
   , Meeting = require('../models/meeting')
   , Nagios = require('../lib/nagios')
@@ -6,49 +9,16 @@ var LoadBalancer = require('../lib/load_balancer')
   , Utils = require('../lib/utils')
   , config = require('../config')
   , request = require('request')
-  , sha1 = require('sha1')
   , url = require('url');
 
 
 // HELPERS
-
-// Validates the checksum in the request 'req'.
-// If it doesn't match the expected checksum, we'll send
-// an XML response with an error code just like BBB does and
-// return false. Returns true if the checksum matches.
-exports.validateChecksum = function(req, res){
-  var method, query, salt, urlObj, checksum;
-
-  urlObj = url.parse(req.url, true);
-  checksum = urlObj.query['checksum'];
-  delete urlObj.search; // so the next line has effect
-  delete urlObj.query['checksum'];
-
-  // get the expected checksum
-  // note: the url query is already encoded, howerver BBB expects a ' ' to
-  // be encoded as '+', but any ' ' or '+' in the query are replaced by
-  // '%20' in the 'url.parse()' call above
-  query = Utils.bbbQueryFromUrl(urlObj).replace(/%20/g, '+');
-  method = Utils.bbbMethodFromUrl(urlObj);
-  salt = config.lb.salt;
-  correctChecksum = sha1(method + query + salt);
-
-  // matches the checksum
-  if (checksum != correctChecksum) {
-    Logger.log('checksum check failed, sending a checksumError response');
-    res.contentType('xml');
-    res.send(config.bbb.responses.checksumError);
-    return false;
-  }
-  return true;
-};
 
 // Basic handler that tries to find the meeting using the meetingID provided
 // in the request and checks the checksum. If the meeting is not found or the
 // checksum is incorrect it responds with an error.
 // Otherwise it calls the callback 'fn'.
 exports.basicHandler = function(req, res, fn){
-  if (!exports.validateChecksum(req, res)) return;
 
   urlObj = url.parse(req.url, true);
   var m_id = urlObj.query['meetingID'];
@@ -92,10 +62,28 @@ exports.apiIndex = function(req, res){
   res.send(config.bbb.responses.apiIndex);
 };
 
+// Validates the checksum in the request 'req'.
+// If it doesn't match the expected checksum, we'll send
+// an XML response with an error code just like BBB does and
+// return false. Returns true if the checksum matches.
+exports.validateChecksum = function(req, res){
+  var urlObj, checksum;
+
+  urlObj = url.parse(req.url, true);
+  checksum = urlObj.query['checksum'];
+
+  // matches the checksum in the url with the expected checksum
+  if (checksum != BigBlueButton.checksum(req.url, config.lb.salt, true)) {
+    Logger.log('checksum check failed, sending a checksumError response');
+    res.contentType('xml');
+    res.send(config.bbb.responses.checksumError);
+    return false;
+  }
+  return true;
+};
+
 // Routing a 'create' request
 exports.create = function(req, res){
-  if (!exports.validateChecksum(req, res)) return;
-
   urlObj = url.parse(req.url, true);
   var m_id = urlObj.query['meetingID'];
   Logger.log(urlObj.pathname + ' request with: ' + JSON.stringify(urlObj.query), m_id);
@@ -132,8 +120,6 @@ exports.getMeetings = function(req, res){
     , id
     , responses = 0
     , count = 0;
-
-  if (!exports.validateChecksum(req, res)) return;
 
   Server.count(function(err, c) { count = c; });
 
