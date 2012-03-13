@@ -1,8 +1,3 @@
-
-/**
- * Module dependencies.
- */
-
 var express = require('express')
   , routes = require('./routes')
   , Meeting = require('./models/meeting')
@@ -35,7 +30,7 @@ app.configure('production', function(){
 });
 
 // Start the integration with nagios
-Nagios.startup(config.nagios);
+Nagios.startup();
 
 // Routes
 app.all('*', function(req, res, next){ // simple request logger
@@ -43,16 +38,16 @@ app.all('*', function(req, res, next){ // simple request logger
   next();
 });
 app.get('/', routes.index);
-app.get(config.bbb.api_path, routes.apiIndex);
-app.all(config.bbb.api_path + '/*', function(req, res, next){ // checksum checker
+app.get(config.bbb.apiPath, routes.apiIndex);
+app.all(config.bbb.apiPath + '/*', function(req, res, next){ // checksum checker
   if (routes.validateChecksum(req, res)) {
     next();
   }
 });
-app.get(config.bbb.api_path + '/create', routes.create);
-app.get(config.bbb.api_path + '/join', routes.join);
-app.get(config.bbb.api_path + '/getMeetings', routes.getMeetings);
-app.get(config.bbb.api_path + '/*', routes.anything); // any other api method
+app.get(config.bbb.apiPath + '/create', routes.create);
+app.get(config.bbb.apiPath + '/join', routes.join);
+app.get(config.bbb.apiPath + '/getMeetings', routes.getMeetings);
+app.get(config.bbb.apiPath + '/*', routes.anything); // any other api method
 // TODO: treat getRecordings
 
 app.listen(config.lb.port);

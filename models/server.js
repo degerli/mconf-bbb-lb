@@ -29,10 +29,9 @@ Server.prototype.updateService = function(name, data, fn){
   if (fn) fn(null, service);
 };
 
-// Get the number of meetings in the server from the service
-// BigBlueButton Info
+// Get the number of meetings in the server from the BBB service
 Server.prototype.getMeetingCount = function() {
-  var service = this.services['BigBlueButton Info']
+  var service = this.services[config.nagios.bbbService]
     , count = -1; // -1 disables this server
 
   if (service != undefined) {
@@ -46,10 +45,9 @@ Server.prototype.getMeetingCount = function() {
   return count;
 }
 
-// Inc the number of meetings described in the service
-// BigBlueButton Info
+// Inc the number of meetings described in the BBB service
 Server.prototype.incMeetingCount = function(value) {
-  var service = this.services['BigBlueButton Info']
+  var service = this.services[config.nagios.bbbService]
     , count = 0;
 
   if (service != undefined) {

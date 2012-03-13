@@ -6,14 +6,16 @@ config.lb.proxy = true;
 
 config.nagios = config.nagios || {};
 config.nagios.url = 'http://143.54.12.174/nagios';
-config.nagios.api_path = '/cgi-bin/status-json.cgi';
+config.nagios.apiPath = '/cgi-bin/status-json.cgi';
 config.nagios.auth = 'HTTPBasic'; // set to null for no auth
-config.nagios.interval = 20000; // in ms
+config.nagios.interval = 2000000; // in ms
+config.nagios.defaultServer = 'mconf.org';
+config.nagios.bbbService = 'BigBlueButton Info';
 config.nagios.services = [ 'BigBlueButton Info', 'Network Report',
                            'Processor Report', 'Memory Report' ];
 
 config.bbb = config.bbb || {};
-config.bbb.api_path = '/bigbluebutton/api';
+config.bbb.apiPath = '/bigbluebutton/api';
 config.bbb.responses = {}
 config.bbb.responses.checksumError =
   '<response> \
