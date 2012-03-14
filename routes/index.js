@@ -24,7 +24,7 @@ exports.basicHandler = function(req, res, fn){
   var m_id = urlObj.query['meetingID'];
   Logger.log(urlObj.pathname + ' request with: ' + JSON.stringify(urlObj.query), m_id);
 
-  Meeting.get(m_id, function(err, meeting){
+  Meeting.getByMeetingId(config.db.connection, m_id, function(err, meeting){
     if (!meeting) {
       Logger.log('failed to find meeting', m_id);
 
@@ -88,14 +88,16 @@ exports.create = function(req, res){
   var m_id = urlObj.query['meetingID'];
   Logger.log(urlObj.pathname + ' request with: ' + JSON.stringify(urlObj.query), m_id);
 
-  Meeting.get(m_id, function(err, meeting){
+  Meeting.getByMeetingId(config.db.connection, m_id, function(err, meeting){
 
     // the meeting is not being proxied yet
     if (!meeting) {
       Logger.log('failed to load meeting', m_id);
 
       var server = LoadBalancer.selectServer();
-      meeting = new Meeting(m_id, server);
+      meeting = new Meeting();
+      meeting.meetingId = m_id;
+      meeting.server = server;
       meeting.save();
     }
 
@@ -118,38 +120,39 @@ exports.join = function(req, res){
 exports.getMeetings = function(req, res){
   var server
     , id
-    , responses = []
-    , count = 0;
+    , responses = [];
 
-  Server.count(function(err, c) { count = c; });
+  Server.using(config.db.connection).count(function(err, count) {
 
-  // send a getMeetings to each registered server and concatenate the responses
-  Server.all(function(err, servers) {
-    for (id in servers) {
-      server = servers[id];
+    // send a getMeetings to each registered server and concatenate the responses
+    Server.using(config.db.connection).all(function(err, servers) {
+      for (id in servers) {
+        server = servers[id];
 
-      opt = { url: LoadBalancer.changeServerInUrl(req.url, server) }
-      Logger.log('sending getMeetings to ' + opt['url']);
-      request(opt, function(error, res2, body) {
-        // TODO: how to find out from which server is this response?
-        if (error) {
-          Logger.log('error calling getMeetings: ' + error);
-          responses.push(null);
-        } else {
-          responses.push(body);
-        }
+        opt = { url: LoadBalancer.changeServerInUrl(req.url, server) }
+        Logger.log('sending getMeetings to ' + opt['url']);
+        request(opt, function(error, res2, body) {
+          // TODO: how to find out from which server is this response?
+          if (error) {
+            Logger.log('error calling getMeetings: ' + error);
+            responses.push(null);
+          } else {
+            responses.push(body);
+          }
 
-        // got all the responses, send to the user
-        if (responses.length == count) {
-          xml = BigBlueButton.concatenateGetMeetings(responses);
-          res.contentType('xml');
-          res.send(xml);
-        }
+          // got all the responses, send to the user
+          if (responses.length == count) {
+            xml = BigBlueButton.concatenateGetMeetings(responses);
+            res.contentType('xml');
+            res.send(xml);
+          }
 
-      });
+        });
 
-    }
+      }
+    });
   });
+
 };
 
 // Routing any request that simply needs to be passed to a BBB server

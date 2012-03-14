@@ -1,24 +1,32 @@
-var Service = require('./service')
-  , Logger = require('../lib/logger');
+var Logger = require('../lib/logger')
+  , Meeting = require('../models/meeting')
+  , Service = require('./service')
+  , config = require('../config')
+  , persist = require("persist")
+  , type = persist.type;
 
-// TODO: Temporary data store
-var db = {};
+Server = exports = module.exports = persist.define("Server", {
+  "name": type.STRING,
+  "url": type.STRING,
+  "salt": type.STRING,
+  "services": type.STRING
+}).hasMany(Meeting);
 
-var Server = exports = module.exports = function Server(name, url, salt) {
-  this.name = name;
-  this.url = url;
-  this.salt = salt;
-  this.services = {};
-};
+// var Server = exports = module.exports = function Server(name, url, salt) {
+//   this.name = name;
+//   this.url = url;
+//   this.salt = salt;
+//   this.services = {};
+// };
 
-Server.prototype.save = function(fn){
-  db[this.name] = this;
-  if (fn) fn();
-};
+// Server.prototype.save = function(fn){
+//   db[this.name] = this;
+//   if (fn) fn();
+// };
 
-Server.prototype.destroy = function(fn){
-  exports.destroy(this.name, fn);
-};
+// Server.prototype.destroy = function(fn){
+//   exports.destroy(this.name, fn);
+// };
 
 Server.prototype.updateService = function(name, data, fn){
   service = this.services[name];
@@ -60,45 +68,45 @@ Server.prototype.incMeetingCount = function(value) {
   }
 }
 
-Server.count = function(fn){
-  fn(null, Object.keys(db).length);
-};
+// Server.count = function(fn){
+//   fn(null, Object.keys(db).length);
+// };
 
-Server.get = function(id, fn){
-  fn(null, db[id]);
-};
+// Server.get = function(id, fn){
+//   fn(null, db[id]);
+// };
 
-Server.first = function(fn){
-  var keys = Object.keys(db);
-  if (keys.length > 0) {
-    fn(null, db[keys[0]]);
-  } else {
-    fn(null, undefined);
-  }
-};
+// Server.first = function(fn){
+//   var keys = Object.keys(db);
+//   if (keys.length > 0) {
+//     fn(null, db[keys[0]]);
+//   } else {
+//     fn(null, undefined);
+//   }
+// };
 
-Server.all = function(fn){
-  var arr = Object.keys(db).reduce(function(arr, id){
-    arr.push(db[id]);
-    return arr;
-  }, []);
-  fn(null, arr);
-};
+// Server.all = function(fn){
+//   var arr = Object.keys(db).reduce(function(arr, id){
+//     arr.push(db[id]);
+//     return arr;
+//   }, []);
+//   fn(null, arr);
+// };
 
-Server.destroy = function(id, fn){
-  if (db[id]) {
-    delete db[id];
-    if (fn) fn();
-  } else {
-    if (fn) fn(new Error('server ' + id + ' does not exist'));
-  }
-};
+// Server.destroy = function(id, fn){
+//   if (db[id]) {
+//     delete db[id];
+//     if (fn) fn();
+//   } else {
+//     if (fn) fn(new Error('server ' + id + ' does not exist'));
+//   }
+// };
 
-Server.clear = function(fn){
-  for (var id in db) {
-    item = db[id];
-    delete item;
-  }
-  db = {};
-  if (fn) fn();
-};
+// Server.clear = function(fn){
+//   for (var id in db) {
+//     item = db[id];
+//     delete item;
+//   }
+//   db = {};
+//   if (fn) fn();
+// };

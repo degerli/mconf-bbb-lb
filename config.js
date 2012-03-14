@@ -4,6 +4,11 @@ var config = require('./config_local');
 config.lb.port = 3000;
 config.lb.proxy = true;
 
+config.db = {};
+config.db.driver = 'sqlite3';
+config.db.filename = 'db/dev.db';
+config.db.connection = null;
+
 config.nagios = config.nagios || {};
 config.nagios.url = 'http://143.54.12.174/nagios';
 config.nagios.apiPath = '/cgi-bin/status-json.cgi';

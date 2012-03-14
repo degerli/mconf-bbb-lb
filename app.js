@@ -1,9 +1,10 @@
-var express = require('express')
+var config = require('./config')
+  , express = require('express')
   , routes = require('./routes')
+  , Database = require('./lib/database')
+  , Logger = require('./lib/logger')
   , Meeting = require('./models/meeting')
-  , config = require('./config')
-  , Nagios = require('./lib/nagios')
-  , Logger = require('./lib/logger');
+  , Nagios = require('./lib/nagios');
 
 var app = module.exports = express.createServer();
 
@@ -31,6 +32,9 @@ app.configure('production', function(){
 
 // Start the integration with nagios
 Nagios.startup();
+
+// Start the database handler
+Database.startup();
 
 // Routes
 app.all('*', function(req, res, next){ // simple request logger
