@@ -30,7 +30,13 @@ app.configure('production', function(){
 });
 
 // Start the integration with nagios
-Nagios.startup();
+Nagios.startup(function(error) {
+  if (error) {
+    Logger.log('error getting the data from Nagios, starting won\' populate the meetings db');
+  } else {
+    BigBlueButton.populateMeetings();
+  }
+});
 
 // Routes
 app.all('*', function(req, res, next){ // simple request logger

@@ -116,24 +116,20 @@ exports.join = function(req, res){
 
 // Routing a 'getMeetings' request
 exports.getMeetings = function(req, res){
-  var server
-    , id
+  var id
     , responses = []
-    , count = 0;
+    , count = 0
+    , xml;
 
   Server.count(function(err, c) { count = c; });
 
-  // send a getMeetings to each registered server and concatenate the responses
+  // send a getMeetings to all registered servers and concatenate the responses
   Server.all(function(err, servers) {
     for (id in servers) {
-      server = servers[id];
 
-      opt = { url: LoadBalancer.changeServerInUrl(req.url, server) }
-      Logger.log('sending getMeetings to ' + opt['url']);
-      request(opt, function(error, res2, body) {
-        // TODO: how to find out from which server is this response?
+      Utils.requestToServer(req.url, servers[id], function(error, response, body, server) {
         if (error) {
-          Logger.log('error calling getMeetings: ' + error);
+          Logger.log('error calling getMeetings to ' + server.name + ': ' + error);
           responses.push(null);
         } else {
           responses.push(body);
@@ -145,7 +141,6 @@ exports.getMeetings = function(req, res){
           res.contentType('xml');
           res.send(xml);
         }
-
       });
 
     }

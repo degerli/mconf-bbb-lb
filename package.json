@@ -4,8 +4,9 @@
   , "private": true
   , "dependencies": {
       "express": "2.5.8"
-    , "jade": ">= 0.0.1"
-    , "sha1": ">= 0.0.1"
-    , "request": ">= 0.0.1"
+    , "jade": "0.21.0"
+    , "sha1": "0.0.1"
+    , "request": "2.9.153"
+    , "xml2js": "0.1.13"
   }
 }
