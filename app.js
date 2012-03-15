@@ -1,9 +1,10 @@
-var express = require('express')
-  , routes = require('./routes')
+var BigBlueButton = require('./lib/bigbluebutton')
+  , Logger = require('./lib/logger')
   , Meeting = require('./models/meeting')
-  , config = require('./config')
   , Nagios = require('./lib/nagios')
-  , Logger = require('./lib/logger');
+  , config = require('./config')
+  , express = require('express')
+  , routes = require('./routes');
 
 var app = module.exports = express.createServer();
 

@@ -43,6 +43,15 @@ Meeting.destroy = function(id, fn){
   }
 };
 
+Meeting.clear = function(fn){
+  for (var id in db) {
+    item = db[id];
+    delete item;
+  }
+  db = {};
+  if (fn) fn();
+};
+
 // Loads a json into the local database
 // For DEVELOPMENT only
 Meeting.fromJson = function(path){

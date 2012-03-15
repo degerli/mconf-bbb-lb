@@ -1,5 +1,6 @@
-var Service = require('./service')
-  , Logger = require('../lib/logger');
+var Logger = require('../lib/logger')
+  , Service = require('./service')
+  , config = require('../config');
 
 // TODO: Temporary data store
 var db = {};
