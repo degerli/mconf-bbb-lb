@@ -4,7 +4,8 @@ var BigBlueButton = require('./lib/bigbluebutton')
   , Nagios = require('./lib/nagios')
   , config = require('./config')
   , express = require('express')
-  , routes = require('./routes');
+  , routes = require('./routes/index')
+  , routesMobile = require('./routes/mobile');
 
 var app = module.exports = express.createServer();
 
@@ -39,14 +40,25 @@ Nagios.startup(function(error) {
   }
 });
 
-// Routes
-app.all('*', function(req, res, next){ // simple request logger
+// simple request logger
+app.get('*', function(req, res, next){
   Logger.log('request to ' + req.url);
   next();
 });
+// overall index
 app.get('/', routes.index);
+
+// mobile routes
+app.get(config.bbb.mobile.path, function(req, res, next){
+  if (routesMobile.validateMobileChecksum(req, res)) {
+    next();
+  }
+});
+app.get(config.bbb.mobile.path, routesMobile.index);
+
+// normal api routes
 app.get(config.bbb.apiPath, routes.apiIndex);
-app.all(config.bbb.apiPath + '/*', function(req, res, next){ // checksum checker
+app.get(config.bbb.apiPath + '/*', function(req, res, next){
   if (routes.validateChecksum(req, res)) {
     next();
   }

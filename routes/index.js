@@ -117,17 +117,22 @@ exports.join = function(req, res){
 // Routing a 'getMeetings' request
 exports.getMeetings = function(req, res){
   var id
-    , responses = []
     , count = 0
+    , rand
+    , request
+    , responses = []
     , xml;
 
   Server.count(function(err, c) { count = c; });
 
   // send a getMeetings to all registered servers and concatenate the responses
+  // TODO: this is almost the same as BigBlueButton.populateMeetings, join them
   Server.all(function(err, servers) {
     for (id in servers) {
 
-      Utils.requestToServer(req.url, servers[id], function(error, response, body, server) {
+      rand = Math.floor(Math.random() * 10000000000) // BBB 0.7 needs it
+      request = config.bbb.apiPath + '/getMeetings?random=' + rand;
+      Utils.requestToServer(request, servers[id], function(error, response, body, server) {
         if (error) {
           Logger.log('error calling getMeetings to ' + server.name + ': ' + error);
           responses.push(null);

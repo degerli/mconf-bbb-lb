@@ -36,6 +36,24 @@ config.bbb.responses.invalidMeeting = // only used when there are no servers reg
      <message>The meeting ID that you supplied did not match any existing meetings</message> \
    </response>';
 
+config.bbb.mobile = {};
+config.bbb.mobile.path = '/demo/mobile.jsp';
+config.bbb.mobile.timestamp = null;
+config.bbb.mobile.responses = {};
+config.bbb.mobile.responses.getTimestamp =
+  '<response> \
+     <returncode>SUCCESS</returncode> \
+     <timestamp>%%TIMESTAMP%%</timestamp> \
+   </response>';
+config.bbb.mobile.responses.timestampError =
+  '<meetings> \
+     <meeting> \
+       <returncode>FAILED</returncode> \
+     </meeting> \
+   </meetings>';
+
+"<meetings><meeting><returncode>FAILED</returncode></meeting></meetings>"
+
 // for reference, in case we need process.env in the future:
 // config.twitter.user_name = process.env.TWITTER_USER || 'username';
 
