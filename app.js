@@ -59,6 +59,7 @@ app.get(config.bbb.apiPath + '/*', function(req, res, next){
 });
 app.get(config.bbb.apiPath + '/create', routes.create);
 app.get(config.bbb.apiPath + '/join', routes.join);
+app.get(config.bbb.apiPath + '/end', routes.end);
 app.get(config.bbb.apiPath + '/getMeetings', routes.getMeetings);
 app.get(config.bbb.apiPath + '/*', routes.anything); // any other api method
 // TODO: treat getRecordings

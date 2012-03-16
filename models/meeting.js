@@ -1,7 +1,7 @@
 var fs = require('fs')
   , Server = require('./server');
 
-// TODO: rename sync functions to nameSync()
+// TODO: rename sync functions to nameSync() and remove the callbacks since they're not async
 
 var db = {};
 
@@ -38,9 +38,9 @@ Meeting.all = function(fn){
 Meeting.destroy = function(id, fn){
   if (db[id]) {
     delete db[id];
-    fn();
+    if (fn) fn();
   } else {
-    fn(new Error('meeting ' + id + ' does not exist'));
+    if (fn) fn(new Error('meeting ' + id + ' does not exist'));
   }
 };
 

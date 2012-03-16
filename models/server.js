@@ -2,7 +2,7 @@ var Logger = require('../lib/logger')
   , Service = require('./service')
   , config = require('../config');
 
-// TODO: rename sync functions to nameSync()
+// TODO: rename sync functions to nameSync() and remove the callbacks since they're not async
 
 var db = {};
 

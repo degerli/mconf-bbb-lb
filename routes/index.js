@@ -33,7 +33,7 @@ exports.basicHandler = function(req, res, fn){
       LoadBalancer.defaultServer(function(server) {
         if (server != undefined) {
           Logger.log('redirecting to the default server ' + server.name, m_id);
-          LoadBalancer.handle(req, res, server, config.lb.proxy);
+          LoadBalancer.handle(req, res, server);
         } else {
           Logger.log('there\'s no default server, sending an invalidMeeting response', m_id);
           res.contentType('xml');
@@ -83,6 +83,7 @@ exports.validateChecksum = function(req, res){
 };
 
 // Routing a 'create' request
+// TODO: in proxy mode, only add the meeting if the response is successful
 exports.create = function(req, res){
   urlObj = url.parse(req.url, true);
   var m_id = urlObj.query['meetingID'];
@@ -102,7 +103,7 @@ exports.create = function(req, res){
     Logger.log('successfully loaded meeting', m_id);
     Logger.log('server selected ' + meeting.server.url, m_id);
 
-    LoadBalancer.handle(req, res, meeting.server, config.lb.proxy);
+    LoadBalancer.handle(req, res, meeting.server);
   });
 };
 
@@ -111,6 +112,16 @@ exports.join = function(req, res){
   exports.basicHandler(req, res, function(meeting) {
     // always redirect, never proxy
     LoadBalancer.handle(req, res, meeting.server, false);
+  });
+};
+
+// Routing a 'end' request
+// TODO: in proxy mode, only remove the meeting if the response is successful
+exports.end = function(req, res){
+  exports.basicHandler(req, res, function(meeting) {
+    // assumes the meeting will be ended
+    meeting.destroy();
+    LoadBalancer.handle(req, res, meeting.server);
   });
 };
 
@@ -154,6 +165,6 @@ exports.getMeetings = function(req, res){
 // Routing any request that simply needs to be passed to a BBB server
 exports.anything = function(req, res){
   exports.basicHandler(req, res, function(meeting) {
-    LoadBalancer.handle(req, res, meeting.server, config.lb.proxy);
+    LoadBalancer.handle(req, res, meeting.server);
   });
 };
