@@ -1,14 +1,26 @@
-// NOTE: See config_local.js for local private configurations.
+// Global configurations file
+// See config_local.js for private configurations.
+
+// first check if the local config file exists
+var fs = require('fs');
+try {
+  fs.statSync('./config_local.js');
+} catch (e) {
+  console.log('ERROR: You don\'t have a config_local.js file. Aborting.');
+  console.log('       Create it with "cp config_local.js.example config_local.js"');
+  process.exit(1);
+}
+
 var config = require('./config_local');
 
 config.lb.port = 3000;
 config.lb.proxy = true;
+config.lb.requestTimeout = 10000; // max wait = 10sec
 
 config.nagios = config.nagios || {};
-config.nagios.url = 'http://143.54.12.174/nagios';
 config.nagios.apiPath = '/cgi-bin/status-json.cgi';
 config.nagios.auth = 'HTTPBasic'; // set to null for no auth
-config.nagios.interval = 2000000; // in ms
+config.nagios.interval = 20000; // in ms
 config.nagios.defaultServer = 'mconf.org';
 config.nagios.bbbService = 'BigBlueButton Info';
 config.nagios.services = [ 'BigBlueButton Info', 'Network Report',

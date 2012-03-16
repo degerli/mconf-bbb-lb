@@ -2,7 +2,8 @@ var Logger = require('../lib/logger')
   , Service = require('./service')
   , config = require('../config');
 
-// TODO: Temporary data store
+// TODO: rename sync functions to nameSync()
+
 var db = {};
 
 var Server = exports = module.exports = function Server(name, url, salt) {

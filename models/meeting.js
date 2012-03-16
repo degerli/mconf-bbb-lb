@@ -1,7 +1,8 @@
 var fs = require('fs')
   , Server = require('./server');
 
-// TODO: Temporary data store
+// TODO: rename sync functions to nameSync()
+
 var db = {};
 
 var Meeting = exports = module.exports = function Meeting(id, server) {
