@@ -5,9 +5,13 @@ var fs = require('fs')
 
 var db = {};
 
-var Meeting = exports = module.exports = function Meeting(id, server) {
+var Meeting = exports = module.exports = function Meeting(id, server, password) {
   this.id = id;
   this.server = server;
+
+  // we only need this for the mobile client
+  // see routes/mobile.sendGetMeetingInfoToAll()
+  this.password = password;
 };
 
 Meeting.prototype.save = function(fn){

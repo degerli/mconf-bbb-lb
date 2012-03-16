@@ -1,4 +1,6 @@
 // Router for the mobile requests
+// It will work always on proxy-mode
+//
 // This is an implementation of the mobile.jsp demo from BigBlueButton
 // https://github.com/bigbluebutton/bigbluebutton/blob/master/bbb-api-demo/src/main/webapp/mobile.jsp
 
@@ -6,6 +8,7 @@ var BigBlueButton = require('../lib/bigbluebutton')
   , Logger = require('../lib/logger')
   , Utils = require('../lib/utils')
   , config = require('../config')
+  , request = require('request')
   , routes = require('./index')
   , url = require('url');
 
@@ -50,6 +53,12 @@ exports.validateTimestamp = function(req, res){
   }
   return true;
 };
+
+// Sends a default error XML to the client
+exports.sendDefaultError = function(req, res) {
+  res.contentType('xml');
+  res.send(config.bbb.mobile.responses.defaultError);
+}
 
 // All requests from the mobile app end up here
 exports.index = function(req, res){
@@ -97,11 +106,49 @@ exports.getTimestamp = function(req, res) {
 }
 
 // Treats action=getMeetings
+// We can't use routes.getMeetings() because the mobile client expects
+// a getMeetingInfo to be called for each meeting in the list
 exports.getMeetings = function(req, res) {
-  return routes.getMeetings(req, res);
+  var meetId
+    , meetings = []
+    , allMeetings = []
+    , responses = []
+    , serverId
+    , xml;
+
+  BigBlueButton.sendGetMeetingsToAll(function(error, body, server) {
+    if (error) {
+      Logger.log('error calling getMeetings to ' + server.name + ': ' + error);
+      allMeetings.push(null);
+    } else {
+      Logger.log('got response to getMeetings from ' + server.name);
+      meetings = BigBlueButton.meetingsFromGetMeetings(body, server);
+      for (var id in meetings) {
+        allMeetings.push(meetings[id]);
+      }
+    }
+  }, function(total) {
+
+    // call a 'getMeetingInfo' for each meeting found in 'getMeetings'
+    exports.sendGetMeetingInfoToAll(allMeetings, function(error, body, server) {
+      if (error) {
+        Logger.log('error calling getMeetingInfo to ' + server.name + ': ' + error);
+        responses.push(null);
+      } else {
+        Logger.log('got response to getMeetingInfo from ' + server.name);
+        responses.push(body);
+      }
+    }, function(total) {
+      xml = exports.concatenateGetMeetingInfo(responses);
+      res.contentType('xml');
+      res.send(xml);
+    });
+  });
 }
 
 // Treats action=create
+// We can't use routes.create() because the mobile client expects
+// different responses than those from the normal api
 exports.create = function(req, res) {
   var urlObj = url.parse(req.url, true);
 
@@ -121,7 +168,33 @@ exports.create = function(req, res) {
     req.url += '&voiceBridge=' + (7000 + Math.floor(Math.random() * 10000) - 1);
   }
 
-  return routes.create(req, res);
+  routes.createBase(req, res, function(meeting) {
+
+    var newUrl = BigBlueButton.formatBBBUrl(req.url, meeting.server);
+    opt = { url: newUrl, timeout: config.lb.requestTimeout }
+    request(opt, function(error, response, body) {
+      if (error) {
+        Logger.log('error proxying the request: ' + error);
+      } else {
+        Logger.log('got the response from BBB, sending it to the user.');
+
+        res.statusCode = response.statusCode;
+        for (name in response.headers) { // copy the headers from BBB
+          value = response.headers[name];
+          res.setHeader(name, value);
+        }
+
+        if (body.match(/<returncode>SUCCESS/)) {
+          res.send(body.match(/<meetingID>(.*)<\/meetingID>/)[1]);
+        } else {
+          var msg = 'Error ' + body.match(/<messageKey>(.*)<\/messageKey>/)[1].trim()
+          msg += ': ' + body.match(/<message>(.*)<\/message>/)[1].trim();
+          res.send(msg);
+        }
+      }
+    });
+
+  });
 }
 
 // Treats action=join
@@ -162,7 +235,50 @@ exports.join = function(req, res){
 
 }
 
-exports.sendDefaultError = function(req, res) {
-  res.contentType('xml');
-  res.send(config.bbb.mobile.responses.defaultError);
+// Calls 'getMeetingInfo' for all 'meetings'
+// TODO: this is not in lib/bigbluebutton because it is only used for the
+//       mobile client and might be removed in the future
+exports.sendGetMeetingInfoToAll = function(meetings, afterEach, afterAll) {
+  var count, id, rand, request
+    , received = 0;
+
+  count = meetings.length;
+
+  // send a getMeetingInfo to all 'meetings'
+  for (id in meetings) {
+    request = config.bbb.apiPath + '/getMeetingInfo?';
+    request += 'meetingID=' + escape(meetings[id].id);
+    request += '&password=' + escape(meetings[id].password);
+    Utils.requestToServer(request, meetings[id].server, function(error, response, body, server) {
+      received++;
+      afterEach(error, body, server);
+      if (received == count) {
+        afterAll(received);
+      }
+    });
+  }
+}
+
+// Receives an array with responses from getMeetingInfo calls
+// and generates a response with all the meetings available
+// TODO: this is not in lib/bigbluebutton because it is only used for the
+//       mobile client and might be removed in the future
+exports.concatenateGetMeetingInfo = function(responses) {
+  var id
+    , match
+    , responseMatcher
+    , xml;
+
+  responseMatcher = new RegExp('<response>(.*)</response>');
+
+  xml = '<meetings>';
+  for (id in responses) {
+    match = responses[id].match(responseMatcher);
+    if (match != undefined && match[1] != match != undefined) {
+      xml += '<meeting>' + match[1] + '</meeting>';
+    }
+  }
+  xml += '</meetings>';
+
+  return xml;
 }

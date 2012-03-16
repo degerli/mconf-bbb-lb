@@ -82,9 +82,9 @@ exports.validateChecksum = function(req, res){
   return true;
 };
 
-// Routing a 'create' request
-// TODO: in proxy mode, only add the meeting if the response is successful
-exports.create = function(req, res){
+// Base method used to create a new meeting
+// TODO: This exists only because of the mobile client, see routes/mobile.create
+exports.createBase = function(req, res, callback){
   urlObj = url.parse(req.url, true);
   var m_id = urlObj.query['meetingID'];
   Logger.log(urlObj.pathname + ' request with: ' + JSON.stringify(urlObj.query), m_id);
@@ -111,6 +111,14 @@ exports.create = function(req, res){
     Logger.log('successfully loaded meeting', m_id);
     Logger.log('server selected ' + meeting.server.url, m_id);
 
+    callback(meeting);
+  });
+};
+
+// Routing a 'create' request
+// TODO: in proxy mode, only add the meeting if the response is successful
+exports.create = function(req, res, whenReady){
+  exports.createBase(req, res, function(meeting) {
     LoadBalancer.handle(req, res, meeting.server);
   });
 };
@@ -151,7 +159,7 @@ exports.getMeetings = function(req, res){
       responses.push(null);
       meetings.push(null);
     } else {
-      Logger.log('got response to getMeeting from ' + server.name);
+      Logger.log('got response to getMeetings from ' + server.name);
       responses.push(body);
       meetings.push(BigBlueButton.meetingsFromGetMeetings(body, server));
     }
