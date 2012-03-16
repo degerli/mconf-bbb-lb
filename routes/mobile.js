@@ -108,6 +108,7 @@ exports.getTimestamp = function(req, res) {
 // Treats action=getMeetings
 // We can't use routes.getMeetings() because the mobile client expects
 // a getMeetingInfo to be called for each meeting in the list
+// TODO: update the meetings db as is done in routes/index.getMeetings
 exports.getMeetings = function(req, res) {
   var meetId
     , meetings = []
@@ -169,8 +170,9 @@ exports.create = function(req, res) {
   }
 
   routes.createBase(req, res, function(meeting) {
+    var newUrl, opt, name;
 
-    var newUrl = BigBlueButton.formatBBBUrl(req.url, meeting.server);
+    newUrl = BigBlueButton.formatBBBUrl(req.url, meeting.server);
     opt = { url: newUrl, timeout: config.lb.requestTimeout }
     request(opt, function(error, response, body) {
       if (error) {
@@ -178,12 +180,7 @@ exports.create = function(req, res) {
       } else {
         Logger.log('got the response from BBB, sending it to the user.');
 
-        res.statusCode = response.statusCode;
-        for (name in response.headers) { // copy the headers from BBB
-          value = response.headers[name];
-          res.setHeader(name, value);
-        }
-
+        Utils.copyHeaders(response, res);
         if (body.match(/<returncode>SUCCESS/)) {
           res.send(body.match(/<meetingID>(.*)<\/meetingID>/)[1]);
         } else {
@@ -203,7 +200,7 @@ exports.join = function(req, res){
   var joinUrl, enterUrl, opt;
   var urlObj = url.parse(req.url, true);
 
-  exports.basicHandler(req, res, function(meeting) {
+  routes.basicHandler(req, res, function(meeting) {
     if (urlObj.query['fullName'] == undefined ||
         urlObj.query['password'] == undefined) {
       exports.sendDefaultError(req, res);
@@ -212,20 +209,27 @@ exports.join = function(req, res){
     joinUrl = BigBlueButton.formatBBBUrl(req.url, meeting.server);
     enterUrl = meeting.server.url + config.bbb.apiPath + '/enter'
 
-    //Logger.log('JOIN URL ' + joinUrl);
-    //Logger.log('ENTER URL ' + enterUrl);
+    Logger.log('JOIN URL ' + joinUrl);
+    Logger.log('ENTER URL ' + enterUrl);
 
     opt = { url: joinUrl, timeout: config.lb.requestTimeout }
     request(opt, function(joinError, joinRes, joinBody) {
       if (joinError) {
         exports.sendDefaultError(req, res);
       } else {
+        //console.log('JOIN BODY');
+        //console.log(joinBody);
+
         opt = { url: enterUrl, timeout: config.lb.requestTimeout }
         request(opt, function(enterError, enterRes, enterBody) {
           if (enterError) {
             exports.sendDefaultError(req, res);
           } else {
-            // TODO: res.contentType('xml'); ?
+
+            console.log(enterBody);
+
+            Utils.copyHeaders(enterRes, res);
+            res.contentType('xm');
             res.send(enterBody);
           }
         });
