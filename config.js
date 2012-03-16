@@ -63,8 +63,8 @@ config.bbb.mobile.responses.timestampError =
        <returncode>FAILED</returncode> \
      </meeting> \
    </meetings>';
+config.bbb.mobile.responses.defaultError = config.bbb.mobile.responses.timestampError;
 
-"<meetings><meeting><returncode>FAILED</returncode></meeting></meetings>"
 
 // for reference, in case we need process.env in the future:
 // config.twitter.user_name = process.env.TWITTER_USER || 'username';

@@ -89,6 +89,14 @@ exports.create = function(req, res){
   var m_id = urlObj.query['meetingID'];
   Logger.log(urlObj.pathname + ' request with: ' + JSON.stringify(urlObj.query), m_id);
 
+  if (m_id == undefined) {
+    Logger.log('meetingID was not defined, forwarding call to BBB to get the error response');
+    Server.get(config.nagios.defaultServer, function(err, server) {
+      LoadBalancer.handle(req, res, server);
+    });
+    return;
+  }
+
   Meeting.get(m_id, function(err, meeting){
 
     // the meeting is not being proxied yet
