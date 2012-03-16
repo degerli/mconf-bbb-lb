@@ -115,40 +115,39 @@ exports.join = function(req, res){
 };
 
 // Routing a 'getMeetings' request
+// TODO: this replicates some code from BigBlueButton.repopulateMeetings()
 exports.getMeetings = function(req, res){
-  var id
-    , count = 0
-    , rand
-    , request
+  var meetId
+    , meetings = []
     , responses = []
+    , serverId
     , xml;
 
-  Server.count(function(err, c) { count = c; });
-
   // send a getMeetings to all registered servers and concatenate the responses
-  // TODO: this is almost the same as BigBlueButton.populateMeetings, join them
-  Server.all(function(err, servers) {
-    for (id in servers) {
+  // since we're getting the list of meetings, we'll also update the meetings db
 
-      rand = Math.floor(Math.random() * 10000000000) // BBB 0.7 needs it
-      request = config.bbb.apiPath + '/getMeetings?random=' + rand;
-      Utils.requestToServer(request, servers[id], function(error, response, body, server) {
-        if (error) {
-          Logger.log('error calling getMeetings to ' + server.name + ': ' + error);
-          responses.push(null);
-        } else {
-          responses.push(body);
-        }
-
-        // got all the responses, send to the user
-        if (responses.length == count) {
-          xml = BigBlueButton.concatenateGetMeetings(responses);
-          res.contentType('xml');
-          res.send(xml);
-        }
-      });
-
+  BigBlueButton.sendGetMeetingsToAll(function(error, body, server) {
+    if (error) {
+      Logger.log('error calling getMeetings to ' + server.name + ': ' + error);
+      responses.push(null);
+      meetings.push(null);
+    } else {
+      Logger.log('got response to getMeeting from ' + server.name);
+      responses.push(body);
+      meetings.push(BigBlueButton.meetingsFromGetMeetings(body, server));
     }
+  }, function(total) {
+    // first update the meetings db
+    Meeting.clear();
+    for (serverId in meetings) {
+      for (meetId in meetings[serverId]) { meetings[serverId][meetId].save(); }
+    }
+    Utils.printMeetings();
+
+    // and send the response to the user
+    xml = BigBlueButton.concatenateGetMeetings(responses);
+    res.contentType('xml');
+    res.send(xml);
   });
 };
 
