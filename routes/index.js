@@ -95,13 +95,12 @@ exports.createBase = function(req, res, callback){
     return;
   }
 
-  // the meeting is not being proxied yet
+  // the meeting is not registered yet
   meeting = Meeting.getSync(m_id);
   if (!meeting) {
     Logger.log('failed to load meeting', m_id);
     server = LoadBalancer.selectServer();
     meeting = new Meeting(m_id, server);
-    meeting.saveSync();
   }
 
   Logger.log('successfully loaded meeting', m_id);
@@ -111,10 +110,16 @@ exports.createBase = function(req, res, callback){
 };
 
 // Routing a 'create' request
-// TODO: in proxy mode, only add the meeting if the response is successful
 exports.create = function(req, res, whenReady){
   exports.createBase(req, res, function(meeting) {
-    LoadBalancer.handle(req, res, meeting.server);
+    LoadBalancer.handle(req, res, meeting.server, null, function(useProxy, body) {
+
+      // if not proxying, we assume the meeting was created, otherwise check the response
+      if (!useProxy || BigBlueButton.isSuccessfulResponse(body)) {
+        meeting.saveSync();
+      }
+
+    })
   });
 };
 
@@ -127,12 +132,16 @@ exports.join = function(req, res){
 };
 
 // Routing a 'end' request
-// TODO: in proxy mode, only remove the meeting if the response is successful
 exports.end = function(req, res){
   exports.basicHandler(req, res, function(meeting) {
-    // assumes the meeting will be ended
-    meeting.destroySync();
-    LoadBalancer.handle(req, res, meeting.server);
+    LoadBalancer.handle(req, res, meeting.server, null, function(useProxy, body) {
+
+      // if not proxying, we assume the meeting was ended, otherwise check the response
+      if (!useProxy || BigBlueButton.isSuccessfulResponse(body)) {
+        meeting.destroySync();
+      }
+
+    });
   });
 };
 
