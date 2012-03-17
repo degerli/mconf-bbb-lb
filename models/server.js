@@ -38,7 +38,7 @@ Server.prototype.getMeetingCountSync = function() {
     try {
       count = service.getIntSync('meetings');
     } catch (e) {
-      Logger.log('ERROR: server ' + this.name + ', getting the number of meetings from: "' + service.data + '"')
+      Logger.error('server ' + this.name + ', getting the number of meetings from: "' + service.data + '"')
     }
   }
 
@@ -55,7 +55,7 @@ Server.prototype.incMeetingCountSync = function(value) {
       count = service.getIntSync('meetings');
       service.setIntSync('meetings', count + 1);
     } catch (e) {
-      Logger.log('ERROR: server ' + this.name + ', setting the number of meetings in: "' + service.data + '"')
+      Logger.error('server ' + this.name + ', setting the number of meetings in: "' + service.data + '"')
     }
   }
 }
