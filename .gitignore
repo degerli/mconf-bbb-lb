@@ -3,5 +3,5 @@
 *.log
 node_modules/
 .data.json
-config_local.js
+config_local.coffee
 debug.log
