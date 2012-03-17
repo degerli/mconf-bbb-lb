@@ -6,6 +6,7 @@
 
 var BigBlueButton = require('../lib/bigbluebutton')
   , Logger = require('../lib/logger')
+  , Meeting = require('../models/meeting')
   , Utils = require('../lib/utils')
   , config = require('../config')
   , request = require('request')
@@ -108,13 +109,11 @@ exports.getTimestamp = function(req, res) {
 // Treats action=getMeetings
 // We can't use routes.getMeetings() because the mobile client expects
 // a getMeetingInfo to be called for each meeting in the list
-// TODO: update the meetings db as is done in routes/index.getMeetings
 exports.getMeetings = function(req, res) {
-  var meetId
+  var allMeetings = []
+    , id
     , meetings = []
-    , allMeetings = []
     , responses = []
-    , serverId
     , xml;
 
   BigBlueButton.sendGetMeetingsToAll(function(error, body, server) {
@@ -129,21 +128,31 @@ exports.getMeetings = function(req, res) {
       }
     }
   }, function(total) {
+    // first update the meetings db
+    Utils.updateMeetings(allMeetings);
 
-    // call a 'getMeetingInfo' for each meeting found in 'getMeetings'
-    exports.sendGetMeetingInfoToAll(allMeetings, function(error, body, server) {
-      if (error) {
-        Logger.log('error calling getMeetingInfo to ' + server.name + ': ' + error);
-        responses.push(null);
-      } else {
-        Logger.log('got response to getMeetingInfo from ' + server.name);
-        responses.push(body);
-      }
-    }, function(total) {
+    if (Meeting.countSync() == 0) {
       xml = exports.concatenateGetMeetingInfo(responses);
       res.contentType('xml');
       res.send(xml);
-    });
+    } else {
+
+      // call a 'getMeetingInfo' for each meeting found in 'getMeetings'
+      exports.sendGetMeetingInfoToAll(allMeetings, function(error, body, server) {
+        if (error) {
+          Logger.log('error calling getMeetingInfo to ' + server.name + ': ' + error);
+          responses.push(null);
+        } else {
+          Logger.log('got response to getMeetingInfo from ' + server.name);
+          responses.push(body);
+        }
+      }, function(total) {
+        xml = exports.concatenateGetMeetingInfo(responses);
+        res.contentType('xml');
+        res.send(xml);
+      });
+
+    }
   });
 }
 

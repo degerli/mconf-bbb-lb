@@ -160,11 +160,7 @@ exports.getMeetings = function(req, res){
     }
   }, function(total) {
     // first update the meetings db
-    Meeting.clearSync();
-    for (serverId in meetings) {
-      for (meetId in meetings[serverId]) { meetings[serverId][meetId].saveSync(); }
-    }
-    Utils.printMeetings();
+    Utils.updateMeetings(Utils.flatten(meetings));
 
     // and send the response to the user
     xml = BigBlueButton.concatenateGetMeetings(responses);
