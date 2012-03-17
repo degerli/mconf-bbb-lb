@@ -24,7 +24,7 @@ app.configure "development", ->
     dumpExceptions: true
     showStack: true
 
-  # tries to load development seed data from a file
+  # Tries to load development seed data from a file
   Meeting.fromJsonSync ".data.json"
 
 app.configure "production", ->
@@ -33,20 +33,20 @@ app.configure "production", ->
 # Start the integration with nagios
 Nagios.startup BigBlueButton.nagiosCallback
 
-# simple request logger
+# Simple request logger
 app.get "*", (req, res, next) ->
   Logger.log "request to " + req.url
   next()
 
-# overall index
+# Overall index
 app.get "/", routes.index
 
-# mobile routes
+# Mobile routes
 app.get config.bbb.mobile.path, (req, res, next) ->
   next() if routesMobile.validateMobileChecksum(req, res)
 app.get config.bbb.mobile.path, routesMobile.index
 
-# normal api routes
+# Normal api routes
 app.get config.bbb.apiPath, routes.apiIndex
 app.get config.bbb.apiPath + "/*", (req, res, next) ->
   next() if routes.validateChecksum(req, res)

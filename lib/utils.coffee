@@ -1,3 +1,6 @@
+# # Utils module
+# General utility methods.
+
 BigBlueButton = require("../lib/bigbluebutton")
 Logger = require("./logger")
 Meeting = require("../models/meeting")
@@ -8,7 +11,7 @@ url = require("url")
 Utils = exports
 
 # Ruby-like gsub function. Source:
-# http://flochip.com/2011/09/06/rubys-string-gsub-in-javascript/
+# <http://flochip.com/2011/09/06/rubys-string-gsub-in-javascript/>
 Utils.gsub = (source, pattern, replacement) ->
   match = undefined
   result = undefined
@@ -24,15 +27,15 @@ Utils.gsub = (source, pattern, replacement) ->
       source = ""
   result
 
-# Real typeOf a variable
-# http://stackoverflow.com/questions/1303646/check-variable-whether-is-number-or-string-in-javascript
-# Ex: if (realTypeOf([1,2]) == 'Array') ...
-# # TODO: there isn't a method in coffeescript for this?
+# Real `typeOf` a variable.
+# <http://stackoverflow.com/questions/1303646/check-variable-whether-is-number-or-string-in-javascript>
+# Example: `if (realTypeOf([1,2]) == 'Array') ...`
+# TODO: there isn't a method in coffeescript for this?
 Utils.realTypeOf = (obj) ->
   Object::toString.call(obj).slice 8, -1
 
 # Unescaping HTML entities. Source:
-# http://code.google.com/p/jslibs/wiki/JavascriptTips#Escape_and_unescape_HTML_entities
+# <http://code.google.com/p/jslibs/wiki/JavascriptTips#Escape_and_unescape_HTML_entities>
 Utils.unescapeEntities = (str) ->
   entityToCode =
     __proto__: null,
@@ -73,19 +76,21 @@ Utils.unescapeEntities = (str) ->
 
 # Get the method name of a BBB call from the url object (from url.parse())
 # Example:
-#   http://mconf.org/bigbluebutton/api/create?name=Demo+Meeting&meetingID=Demo
-#   returns: 'create'
+#
+# * `urlObj` = `http://mconf.org/bigbluebutton/api/create?name=Demo+Meeting&meetingID=Demo`
+# * returns: `create`
 Utils.bbbMethodFromUrl = (urlObj) ->
   urlObj.pathname.substr (config.bbb.apiPath + "/").length
 
 # Get the query of a BBB call from the url object (from url.parse())
 # Example:
-#   http://mconf.org/bigbluebutton/api/create?name=Demo+Meeting&meetingID=Demo
-#   returns: 'name=Demo+Meeting&meetingID=Demo'
+#
+# * `urlObj` = `http://mconf.org/bigbluebutton/api/create?name=Demo+Meeting&meetingID=Demo`
+# * returns: `name=Demo+Meeting&meetingID=Demo`
 Utils.bbbQueryFromUrl = (urlObj) ->
   url.format(urlObj).substr urlObj.pathname.length + 1
 
-# Sends a request with the url 'originalUrl' to 'server'
+# Sends a request with the url `originalUrl` to `server`.
 Utils.requestToServer = (originalUrl, server, callback) ->
   opt =
     url: BigBlueButton.formatBBBUrl(originalUrl, server)
@@ -95,7 +100,7 @@ Utils.requestToServer = (originalUrl, server, callback) ->
   request opt, (error, res, body) ->
     callback error, res, body, server
 
-# Prints/Logs the meetings stored in the db
+# Prints/Logs the meetings stored in the db.
 Utils.printMeetings = (full) ->
   meetings = Meeting.allSync()
   if meetings.length is 0
@@ -108,8 +113,8 @@ Utils.printMeetings = (full) ->
       for id of meetings
         Logger.log "[" + meetings[id].server.name + "] " + meetings[id].id
 
-# Removes 'param' from the 'urlObj' (parsed with url.parse(..., true))
-# and returns the value of the param if found
+# Removes `param` from the `urlObj` (parsed with `url.parse(..., true)`)
+# and returns the value of the param if found.
 Utils.removeParamFromUrl = (urlObj, param) ->
   ret = ""
   delete urlObj.search if urlObj.search?
@@ -118,13 +123,13 @@ Utils.removeParamFromUrl = (urlObj, param) ->
     delete urlObj.query[param]
   ret
 
-# Copy the headers from a response object to another
+# Copy the headers from a response object to another.
 Utils.copyHeaders = (from, to) ->
   to.statusCode = from.statusCode
   for name of from.headers
     to.setHeader name, from.headers[name]
 
-# Receives an array of 'Meeting's and replace the current meetings db with them
+# Receives an array of `Meeting`'s and replace the current meetings db with them.
 Utils.updateMeetings = (meetings) ->
   Logger.log "updating the meetings db"
   Meeting.clearSync()
@@ -133,7 +138,7 @@ Utils.updateMeetings = (meetings) ->
   Utils.printMeetings()
 
 # Method to flatten arrays. Will only work for 1 level and if all elements are arrays.
-# Example: [[1, 2], [3, 4]].flatten()
+# Example: `[[1, 2], [3, 4]].flatten()`
 Utils.flatten = flatten = (array) ->
   array.reduce (a, b) ->
     a.concat b

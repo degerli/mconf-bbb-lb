@@ -1,3 +1,7 @@
+# # Logger module
+# A simple wrapper around the lib `log` to print text and
+# log it at the same time.
+
 fs = require("fs")
 Log = require("log")
 log = new Log("debug", fs.createWriteStream("debug.log"))

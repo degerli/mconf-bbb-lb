@@ -1,5 +1,5 @@
 # # BigBlueButton module
-# Things that require in-depth knowledge of how BigBlueButton works
+# Methods that require in-depth knowledge of how BigBlueButton works
 # should be here. Such as parsing XML responses.
 
 Logger = require("./logger")
@@ -13,9 +13,9 @@ xml2js = require("xml2js")
 
 BigBlueButton = exports
 
-# Calculates the checksum given a url 'fullUrl' and a 'salt'
-# 'incoming' should be true if the checksum is to match an incoming
-# message. 'mobile' should be true if the checksum is for a mobile request.
+# Calculates the checksum given a url `fullUrl` and a `salt`.
+# `incoming` should be true if the checksum is to match an incoming
+# message. `mobile` should be true if the checksum is for a mobile request.
 BigBlueButton.checksum = (fullUrl, salt, incoming, mobile) ->
 
   # Parse the url and remove the old checksum
@@ -25,12 +25,12 @@ BigBlueButton.checksum = (fullUrl, salt, incoming, mobile) ->
   # Get the expected checksum
   query = Utils.bbbQueryFromUrl(urlObj)
   if incoming? and incoming
-    # Note: the url query is already escaped, however BBB expects a ' ' to
-    # be encoded as '+', but any ' ' or '+' in the query are replaced by
-    # '%20' in the 'url.parse()' call above
-    # so when we're sending a call to BBB, we encode it using '%20', but
+    # **Note**: the url query is already escaped, however BBB expects a space to
+    # be encoded as `+`, but any space or `+` in the query are replaced by
+    # `%20` in the `url.parse()` call above.
+    # So when we're sending a call to BBB, we encode it using `%20`, but
     # when we are receiving a call (incoming), we should expect that the
-    # salt was calculated using '+' where we have '%20's
+    # salt was calculated using `+` where we have `%20`'s
     query = query.replace(/%20/g, "+")
 
   if mobile? and mobile
@@ -41,7 +41,7 @@ BigBlueButton.checksum = (fullUrl, salt, incoming, mobile) ->
   checksum
 
 # Receives an array with responses from getMeetings calls
-# and generates a response with all the meetings available
+# and generates a response with all the meetings available.
 # FIXME: maybe we should prevent duplicated meeting ids?
 BigBlueButton.concatenateGetMeetings = (responses) ->
   selected = null
@@ -81,8 +81,8 @@ BigBlueButton.nagiosCallback = (error) ->
     Logger.log "repopulating the meetings db"
     BigBlueButton.repopulateMeetings()
 
-# Sends a 'getMeetings' request to all registered servers and use the responses
-# to create the database of meetings
+# Sends a `getMeetings` request to all registered servers and use the responses
+# to create the database of meetings.
 # FIXME: if there are meetings with duplicated meetingID's, the last one parsed
 #        will be the one used, the others are ignored
 BigBlueButton.repopulateMeetings = ->
@@ -105,8 +105,8 @@ BigBlueButton.repopulateMeetings = ->
     # After we've got all the responses, replace the meetings db and print them
     Utils.updateMeetings Utils.flatten(meetings)
 
-# Parses the XML in 'data' (result from 'getMeetings') and returns an array
-# of Meeting's with the meetings in the XML
+# Parses the XML in `data` (result from `getMeetings`) and returns an array
+# of Meeting's with the meetings in the XML.
 BigBlueButton.meetingsFromGetMeetings = (data, server) ->
   result = []
   parser = new xml2js.Parser()
@@ -131,8 +131,10 @@ BigBlueButton.meetingsFromGetMeetings = (data, server) ->
 
   result
 
-# Gets an url in 'originalUrl' and formats it to be sent to a BBB server
-# 'originalUrl' in the format '/bigbluebutton/api/getMeetings?random=123...'
+# Gets an url in `originalUrl` and formats it to be sent to a BBB server
+# `originalUrl` in the format:
+#
+#   * `/bigbluebutton/api/getMeetings?random=123...`.
 BigBlueButton.formatBBBUrl = (originalUrl, server) ->
   # Parse the url and change the checksum
   urlObj = url.parse(originalUrl, true)
@@ -141,13 +143,13 @@ BigBlueButton.formatBBBUrl = (originalUrl, server) ->
 
   server.url + url.format(urlObj)
 
-# Returns whether an XML response from a BBB server is successful or not
+# Returns whether an XML response from a BBB server is successful or not.
 BigBlueButton.isSuccessfulResponse = (body) ->
   body.match /<returncode>SUCCESS/
 
-# Sends a 'getMeetings' to all servers registered
-# Calls 'afterEach' after each response and 'afterAll' after all responses
-# are received (or after they timed-out)
+# Sends a `getMeetings` to all servers registered.
+# Calls `afterEach` after each response and `afterAll` after all responses
+# are received (or after they timed-out).
 # TODO: check what happens if one connection times out
 BigBlueButton.sendGetMeetingsToAll = (afterEach, afterAll) ->
   received = 0

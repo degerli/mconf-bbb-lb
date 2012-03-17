@@ -1,8 +1,8 @@
 # # Router for the mobile requests
-# It will work always on proxy-mode
+# It will work always on proxy-mode.
 #
-# This is an implementation of the mobile.jsp demo from BigBlueButton
-# https://github.com/bigbluebutton/bigbluebutton/blob/master/bbb-api-demo/src/main/webapp/mobile.jsp
+# This is an implementation of the `mobile.jsp` demo from BigBlueButton
+# <https://github.com/bigbluebutton/bigbluebutton/blob/master/bbb-api-demo/src/main/webapp/mobile.jsp>
 
 BigBlueButton = require("../lib/bigbluebutton")
 Logger = require("../lib/logger")
@@ -13,7 +13,7 @@ request = require("request")
 routes = require("./index")
 url = require("url")
 
-# Validates the checksum in the request 'req' against the
+# Validates the checksum in the request `req` against the
 # mobile salt. If it doesn't match the expected checksum, we'll send
 # an XML response with an error code just like BBB does and
 # return false. Returns true if the checksum matches.
@@ -31,7 +31,7 @@ exports.validateMobileChecksum = (req, res) ->
   else
     true
 
-# Validates the timestamp in the request 'req'. If it is not within 1 minute
+# Validates the timestamp in the request `req`. If it is not within 1 minute
 # from the last timestamp sent, it sends a response with an error. Otherwise
 # it will return true.
 exports.validateTimestamp = (req, res) ->
@@ -78,7 +78,7 @@ exports.index = (req, res) ->
       when "join" then exports.join req, res
       else exports.sendDefaultError req, res
 
-# Treats action=getTimestamp
+# Treats the action `getTimestamp`.
 exports.getTimestamp = (req, res) ->
   config.bbb.mobile.timestamp = new Date().getTime()
   xml = config.bbb.mobile.responses.getTimestamp
@@ -87,9 +87,9 @@ exports.getTimestamp = (req, res) ->
   res.send xml
   Logger.log "sent the timestamp " + config.bbb.mobile.timestamp
 
-# Treats action=getMeetings
-# We can't use routes.getMeetings() because the mobile client expects
-# a getMeetingInfo to be called for each meeting in the list
+# Treats the action `getMeetings`.
+# We can't use `routes.getMeetings()` because the mobile client expects
+# a `getMeetingInfo` to be called for each meeting in the list.
 exports.getMeetings = (req, res) ->
   allMeetings = []
   meetings = []
@@ -114,7 +114,7 @@ exports.getMeetings = (req, res) ->
       res.send xml
 
     else
-      # Call a 'getMeetingInfo' for each meeting found in 'getMeetings'
+      # Call a `getMeetingInfo` for each meeting found in `getMeetings`
       exports.sendGetMeetingInfoToAll allMeetings, (error, body, server) ->
         if error
           Logger.log "error calling getMeetingInfo to " + server.name + ": " + error
@@ -127,13 +127,13 @@ exports.getMeetings = (req, res) ->
         res.contentType "xml"
         res.send xml
 
-# Treats action=create
-# We can't use routes.create() because the mobile client expects
-# different responses than those from the normal api
+# Treats the action `create`.
+# We can't use `routes.create()` because the mobile client expects
+# different responses than those from the normal api.
 exports.create = (req, res) ->
   urlObj = url.parse(req.url, true)
 
-  # Add some parameters that are mandatory and are added by bbb_api.jsp if
+  # Add some parameters that are mandatory and are added by `bbb_api.jsp` if
   # they don't exist
   if not urlObj.query["name"]? and urlObj.query["meetingID"]?
     req.url += "&name=" + urlObj.query["meetingID"]
@@ -163,7 +163,7 @@ exports.create = (req, res) ->
           msg += ": " + body.match(/<message>(.*)<\/message>/)[1].trim()
           res.send msg
 
-# Treats action=join
+# Treats the action `join`.
 # TODO: this method wasn't tested yet
 exports.join = (req, res) ->
   urlObj = url.parse(req.url, true)
@@ -201,14 +201,14 @@ exports.join = (req, res) ->
             res.contentType "xm"
             res.send enterBody
 
-# Calls 'getMeetingInfo' for all 'meetings'
+# Calls `getMeetingInfo` for all `meetings`.
 # TODO: this is not in lib/bigbluebutton because it is only used for the
 #       mobile client and might be removed in the future
 exports.sendGetMeetingInfoToAll = (meetings, afterEach, afterAll) ->
   received = 0
   count = meetings.length
 
-  # Send a getMeetingInfo to all 'meetings'
+  # Send a getMeetingInfo to all `meetings`
   for id of meetings
     request = config.bbb.apiPath + "/getMeetingInfo?"
     request += "meetingID=" + escape(meetings[id].id)
@@ -219,8 +219,8 @@ exports.sendGetMeetingInfoToAll = (meetings, afterEach, afterAll) ->
       if received is count
         afterAll received
 
-# Receives an array with responses from getMeetingInfo calls
-# and generates a response with all the meetings available
+# Receives an array with responses from `getMeetingInfo` calls
+# and generates a response with all the meetings available.
 # TODO: this is not in lib/bigbluebutton because it is only used for the
 #       mobile client and might be removed in the future
 exports.concatenateGetMeetingInfo = (responses) ->

@@ -1,13 +1,18 @@
+# # Model Meeting
+# Has a class `Meeting` to represent meetings and a database (a simple
+# in-memory object) to store the meetings saved.
+
 fs = require("fs")
 Server = require("./server")
 
+# The database of meetings.
 db = {}
 
 Meeting = exports = module.exports = Meeting = (id, server, password) ->
   @id = id
   @server = server
-  # We only need this for the mobile client
-  # See routes/mobile.sendGetMeetingInfoToAll()
+  # We only need this password for the mobile client.
+  # See `routes/mobile.sendGetMeetingInfoToAll()`.
   @password = password
   this
 
@@ -44,8 +49,7 @@ Meeting.clearSync = ->
     delete item
   db = {}
 
-# Loads a json into the local database
-# For DEVELOPMENT only
+# Loads a json into the local database. For DEVELOPMENT only.
 Meeting.fromJsonSync = (path) ->
   try
     fileContents = fs.readFileSync(path, "utf8")

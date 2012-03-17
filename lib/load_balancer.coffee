@@ -1,5 +1,5 @@
 # # LoadBalancer module
-# Responsible for balancing the request.
+# Responsible for balancing the requests.
 
 BigBlueButton = require("../lib/bigbluebutton")
 Logger = require("../lib/logger")
@@ -47,15 +47,18 @@ LoadBalancer.defaultServer = ->
   if server?
     server
   else
-    # if we don't find the default server, use the first one
+    # If we don't find the default server, use the first one
     Server.firstSync()
 
-# Handles a request 'req' to the BigBlueButton 'server'.
-# If 'useProxy', the request will be 'proxied', otherwise it will respond with
-# a redirect to the BBB server.
-# Also, if 'useProxy', 'beforeSend' will be called when we receive a response from BBB
-# and before sending it to the user. If not 'useProxy', 'beforeSend' is called
-# before returning the redirect to the user.
+# Handles a request `req` to the BigBlueButton `server`.
+# If `useProxy`, the request will be 'proxied', otherwise it will respond with
+# a redirect to the BigBluebutton server.
+# Also, if `useProxy`, `beforeSend` will be called when we receive a response from BBB
+# and before sending it to the user. If not `useProxy`, `beforeSend` is called
+# before returning the redirect to the user. `beforeSend` parameters are:
+#
+# * `isProxy`: true if the request being proxied.
+# * `data`: the data received from the BBB server (if any).
 LoadBalancer.handle = (req, res, server, useProxy, beforeSend) ->
   Logger.log "handling the request to the server " + server.url
   newUrl = BigBlueButton.formatBBBUrl(req.url, server)
@@ -67,13 +70,13 @@ LoadBalancer.handle = (req, res, server, useProxy, beforeSend) ->
   else
     LoadBalancer.redirect res, newUrl, beforeSend
 
-# Redirects a request to 'destination'
+# Redirects a request to `destination` (a uri).
 LoadBalancer.redirect = (res, destination, beforeSend) ->
   Logger.log "full redirect api call to " + destination
   beforeSend false, null if beforeSend?
   res.redirect destination
 
-# Proxies a request to 'destination'
+# Proxies a request to `destination` (a uri).
 LoadBalancer.proxy = (res, destination, beforeSend) ->
   Logger.log "proxying api call to " + destination
   opt =

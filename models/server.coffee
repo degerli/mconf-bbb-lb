@@ -1,7 +1,12 @@
+# # Model Server
+# Has a class `Server` to represent BigBlueButton servers and a
+# database (a simple in-memory object) to store the servers saved.
+
 Logger = require("../lib/logger")
 Service = require("./service")
 config = require("../config")
 
+# The database of servers.
 db = {}
 
 Server = exports = module.exports = Server = (name, url, salt) ->
@@ -24,7 +29,7 @@ Server::updateServiceSync = (name, data) ->
   @services[name] = service
   service
 
-# Get the number of meetings in the server from the BBB service
+# Get the number of meetings in the server from the BBB service.
 Server::getMeetingCountSync = ->
   service = @services[config.nagios.bbbService]
   count = -1
@@ -35,7 +40,7 @@ Server::getMeetingCountSync = ->
       Logger.error "server " + @name + ", getting the number of meetings from: \"" + service.data + "\""
   count
 
-# Increment the number of meetings described in the BBB service
+# Increment the number of meetings described in the BBB service.
 Server::incMeetingCountSync = (value) ->
   service = @services[config.nagios.bbbService]
   count = 0
