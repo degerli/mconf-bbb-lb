@@ -19,33 +19,31 @@ var BigBlueButton = require('../lib/bigbluebutton')
 // checksum is incorrect it responds with an error.
 // Otherwise it calls the callback 'fn'.
 exports.basicHandler = function(req, res, fn){
+  var meeting, m_id, urlObj, server;
 
   urlObj = url.parse(req.url, true);
-  var m_id = urlObj.query['meetingID'];
+  m_id = urlObj.query['meetingID'];
   Logger.log(urlObj.pathname + ' request with: ' + JSON.stringify(urlObj.query), m_id);
 
-  Meeting.get(m_id, function(err, meeting){
-    if (!meeting) {
-      Logger.log('failed to find meeting', m_id);
+  meeting = Meeting.getSync(m_id);
+  if (!meeting) {
+    Logger.log('failed to find meeting', m_id);
 
-      // we'll use the default server to get a proper anwser from BBB
-      // usually it will be an XML with an error code
-      LoadBalancer.defaultServer(function(server) {
-        if (server != undefined) {
-          Logger.log('redirecting to the default server ' + server.name, m_id);
-          LoadBalancer.handle(req, res, server);
-        } else {
-          Logger.log('there\'s no default server, sending an invalidMeeting response', m_id);
-          res.contentType('xml');
-          res.send(config.bbb.responses.invalidMeeting);
-        }
-      });
-
-      return false;
+    // we'll use the default server to get a proper anwser from BBB
+    // usually it will be an XML with an error code
+    server = LoadBalancer.defaultServer();
+    if (server != undefined) {
+      Logger.log('redirecting to the default server ' + server.name, m_id);
+      LoadBalancer.handle(req, res, server);
+    } else {
+      Logger.log('there\'s no default server, sending an invalidMeeting response', m_id);
+      res.contentType('xml');
+      res.send(config.bbb.responses.invalidMeeting);
     }
+    return false;
+  }
 
-    fn(meeting);
-  });
+  fn(meeting);
 };
 
 
@@ -85,34 +83,31 @@ exports.validateChecksum = function(req, res){
 // Base method used to create a new meeting
 // TODO: This exists only because of the mobile client, see routes/mobile.create
 exports.createBase = function(req, res, callback){
+  var meeting, m_id, server, urlObj;
+
   urlObj = url.parse(req.url, true);
-  var m_id = urlObj.query['meetingID'];
+  m_id = urlObj.query['meetingID'];
   Logger.log(urlObj.pathname + ' request with: ' + JSON.stringify(urlObj.query), m_id);
 
   if (m_id == undefined) {
     Logger.log('meetingID was not defined, forwarding call to BBB to get the error response');
-    Server.get(config.nagios.defaultServer, function(err, server) {
-      LoadBalancer.handle(req, res, server);
-    });
+    LoadBalancer.handle(req, res, LoadBalancer.defaultServer());
     return;
   }
 
-  Meeting.get(m_id, function(err, meeting){
+  // the meeting is not being proxied yet
+  meeting = Meeting.getSync(m_id);
+  if (!meeting) {
+    Logger.log('failed to load meeting', m_id);
+    server = LoadBalancer.selectServer();
+    meeting = new Meeting(m_id, server);
+    meeting.saveSync();
+  }
 
-    // the meeting is not being proxied yet
-    if (!meeting) {
-      Logger.log('failed to load meeting', m_id);
+  Logger.log('successfully loaded meeting', m_id);
+  Logger.log('server selected ' + meeting.server.url, m_id);
 
-      var server = LoadBalancer.selectServer();
-      meeting = new Meeting(m_id, server);
-      meeting.save();
-    }
-
-    Logger.log('successfully loaded meeting', m_id);
-    Logger.log('server selected ' + meeting.server.url, m_id);
-
-    callback(meeting);
-  });
+  callback(meeting);
 };
 
 // Routing a 'create' request
@@ -136,7 +131,7 @@ exports.join = function(req, res){
 exports.end = function(req, res){
   exports.basicHandler(req, res, function(meeting) {
     // assumes the meeting will be ended
-    meeting.destroy();
+    meeting.destroySync();
     LoadBalancer.handle(req, res, meeting.server);
   });
 };
@@ -165,9 +160,9 @@ exports.getMeetings = function(req, res){
     }
   }, function(total) {
     // first update the meetings db
-    Meeting.clear();
+    Meeting.clearSync();
     for (serverId in meetings) {
-      for (meetId in meetings[serverId]) { meetings[serverId][meetId].save(); }
+      for (meetId in meetings[serverId]) { meetings[serverId][meetId].saveSync(); }
     }
     Utils.printMeetings();
 

@@ -24,7 +24,7 @@ app.configure('development', function(){
   app.use(express.errorHandler({ dumpExceptions: true, showStack: true }));
 
   // tries to load seed data from a file
-  Meeting.fromJson('.data.json');
+  Meeting.fromJsonSync('.data.json');
 });
 
 app.configure('production', function(){

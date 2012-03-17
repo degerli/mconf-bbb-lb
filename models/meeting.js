@@ -1,8 +1,6 @@
 var fs = require('fs')
   , Server = require('./server');
 
-// TODO: rename sync functions to nameSync() and remove the callbacks since they're not async
-
 var db = {};
 
 var Meeting = exports = module.exports = function Meeting(id, server, password) {
@@ -14,59 +12,58 @@ var Meeting = exports = module.exports = function Meeting(id, server, password) 
   this.password = password;
 };
 
-Meeting.prototype.save = function(fn){
+Meeting.prototype.saveSync = function(){
   db[this.id] = this;
-  if (fn) fn();
+  return db[this.id];
 };
 
-Meeting.prototype.destroy = function(fn){
-  exports.destroy(this.id, fn);
+Meeting.prototype.destroySync = function(){
+  return exports.destroySync(this.id);
 };
 
-Meeting.count = function(fn){
-  fn(null, Object.keys(db).length);
+Meeting.countSync = function(){
+  return Object.keys(db).length;
 };
 
-Meeting.get = function(id, fn){
-  fn(null, db[id]);
+Meeting.getSync = function(id){
+  return db[id];
 };
 
-Meeting.all = function(fn){
+Meeting.allSync = function(){
   var arr = Object.keys(db).reduce(function(arr, id){
     arr.push(db[id]);
     return arr;
   }, []);
-  fn(null, arr);
+  return arr;
 };
 
-Meeting.destroy = function(id, fn){
+Meeting.destroySync = function(id){
   if (db[id]) {
     delete db[id];
-    if (fn) fn();
+    return true;
   } else {
-    if (fn) fn(new Error('meeting ' + id + ' does not exist'));
+    return false;
   }
 };
 
-Meeting.clear = function(fn){
+Meeting.clearSync = function(){
   for (var id in db) {
     item = db[id];
     delete item;
   }
   db = {};
-  if (fn) fn();
 };
 
 // Loads a json into the local database
 // For DEVELOPMENT only
-Meeting.fromJson = function(path){
+Meeting.fromJsonSync = function(path){
   try {
     var fileContents = fs.readFileSync(path, 'utf8');
     var json = JSON.parse(fileContents);
     for(var idx in json){
       var s = new Server(json[idx].server.url, json[idx].server.salt);
       var m = new Meeting(json[idx].id, s);
-      m.save();
+      m.saveSync();
     }
 
     Logger.log('loaded data from ' + path);

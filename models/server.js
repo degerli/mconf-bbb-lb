@@ -2,8 +2,6 @@ var Logger = require('../lib/logger')
   , Service = require('./service')
   , config = require('../config');
 
-// TODO: rename sync functions to nameSync() and remove the callbacks since they're not async
-
 var db = {};
 
 var Server = exports = module.exports = function Server(name, url, salt) {
@@ -13,32 +11,32 @@ var Server = exports = module.exports = function Server(name, url, salt) {
   this.services = {};
 };
 
-Server.prototype.save = function(fn){
+Server.prototype.saveSync = function(){
   db[this.name] = this;
-  if (fn) fn();
+  return db[this.name];
 };
 
-Server.prototype.destroy = function(fn){
-  exports.destroy(this.name, fn);
+Server.prototype.destroySync = function(){
+  return exports.destroySync(this.name);
 };
 
-Server.prototype.updateService = function(name, data, fn){
+Server.prototype.updateServiceSync = function(name, data){
   service = this.services[name];
   if (service == undefined) {
     service = new Service(name, data);
   }
   this.services[name] = service;
-  if (fn) fn(null, service);
+  return service;
 };
 
 // Get the number of meetings in the server from the BBB service
-Server.prototype.getMeetingCount = function() {
+Server.prototype.getMeetingCountSync = function() {
   var service = this.services[config.nagios.bbbService]
     , count = -1; // -1 disables this server
 
   if (service != undefined) {
     try {
-      count = service.getInt('meetings');
+      count = service.getIntSync('meetings');
     } catch (e) {
       Logger.log('ERROR: server ' + this.name + ', getting the number of meetings from: "' + service.data + '"')
     }
@@ -48,59 +46,58 @@ Server.prototype.getMeetingCount = function() {
 }
 
 // Inc the number of meetings described in the BBB service
-Server.prototype.incMeetingCount = function(value) {
+Server.prototype.incMeetingCountSync = function(value) {
   var service = this.services[config.nagios.bbbService]
     , count = 0;
 
   if (service != undefined) {
     try {
-      count = service.getInt('meetings');
-      service.setInt('meetings', count + 1);
+      count = service.getIntSync('meetings');
+      service.setIntSync('meetings', count + 1);
     } catch (e) {
       Logger.log('ERROR: server ' + this.name + ', setting the number of meetings in: "' + service.data + '"')
     }
   }
 }
 
-Server.count = function(fn){
-  fn(null, Object.keys(db).length);
+Server.countSync = function(){
+  return Object.keys(db).length;
 };
 
-Server.get = function(id, fn){
-  fn(null, db[id]);
+Server.getSync = function(id){
+  return db[id];
 };
 
-Server.first = function(fn){
+Server.firstSync = function(){
   var keys = Object.keys(db);
   if (keys.length > 0) {
-    fn(null, db[keys[0]]);
+    return db[keys[0]];
   } else {
-    fn(null, undefined);
+    return undefined;
   }
 };
 
-Server.all = function(fn){
+Server.allSync = function(){
   var arr = Object.keys(db).reduce(function(arr, id){
     arr.push(db[id]);
     return arr;
   }, []);
-  fn(null, arr);
+  return arr;
 };
 
-Server.destroy = function(id, fn){
+Server.destroySync = function(id){
   if (db[id]) {
     delete db[id];
-    if (fn) fn();
+    return true;
   } else {
-    if (fn) fn(new Error('server ' + id + ' does not exist'));
+    return false;
   }
 };
 
-Server.clear = function(fn){
+Server.clearSync = function(){
   for (var id in db) {
     item = db[id];
     delete item;
   }
   db = {};
-  if (fn) fn();
 };
