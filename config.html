@@ -1,0 +1,56 @@
+<!DOCTYPE html><html lang="en"><head><title>config</title></head><meta http-equiv="Content-Type" content="text/html; charset=utf-8"><meta name="viewport" content="width=device-width, initial-scale=1.0, minimum-scale=1.0, maximum-scale=1.0"><meta name="groc-relative-root" content=""><meta name="groc-document-path" content="config"><meta name="groc-project-path" content="config.coffee"><meta name="groc-github-url" content="https://github.com/mconf/mconf-bbb-lb"><link rel="stylesheet" type="text/css" media="all" href="assets/style.css"><script type="text/javascript" src="assets/behavior.js"></script><body><div id="meta"><div class="file-path"><a href="https://github.com/mconf/mconf-bbb-lb/blob/master/config.coffee">config.coffee</a></div></div><div id="document"><div class="segment"><div class="comments"><div class="wrapper"><h1 id="global-configurations-file">Global configurations file</h1>
+
+<p>See config_local.coffee for private configurations.
+TODO: might be better to make this a json file</p></div></div></div><div class="segment"><div class="comments"><div class="wrapper"><p>First check if the local config file exists</p></div></div><div class="code"><div class="wrapper"><span class="nv">fs = </span><span class="nx">require</span><span class="p">(</span><span class="s2">&quot;fs&quot;</span><span class="p">)</span>
+<span class="k">try</span>
+  <span class="nx">fs</span><span class="p">.</span><span class="nx">statSync</span> <span class="s2">&quot;./config_local.coffee&quot;</span>
+<span class="k">catch</span> <span class="nx">e</span>
+  <span class="nx">console</span><span class="p">.</span><span class="nx">log</span> <span class="s2">&quot;ERROR: You don&#39;t have a config_local.js file. Aborting.&quot;</span>
+  <span class="nx">console</span><span class="p">.</span><span class="nx">log</span> <span class="s2">&quot;       Create it with \&quot;cp config_local.coffee.example config_local.coffee\&quot;&quot;</span>
+  <span class="nx">process</span><span class="p">.</span><span class="nx">exit</span> <span class="mi">1</span>
+
+<span class="nv">config = </span><span class="nx">require</span><span class="p">(</span><span class="s2">&quot;./config_local&quot;</span><span class="p">)</span></div></div></div><div class="segment"><div class="comments"><div class="wrapper"><h2 id="load-balancer-configs">Load balancer configs</h2></div></div></div><div class="segment"><div class="code"><div class="wrapper"><span class="nv">config.lb.port = </span><span class="mi">3000</span>
+<span class="nv">config.lb.proxy = </span><span class="kc">true</span>
+<span class="nv">config.lb.requestTimeout = </span><span class="mi">10000</span> <span class="c1"># max wait = 10sec</span></div></div></div><div class="segment"><div class="comments"><div class="wrapper"><h2 id="nagios-module-configs">Nagios module configs</h2></div></div></div><div class="segment"><div class="code"><div class="wrapper"><span class="nv">config.nagios = </span><span class="nx">config</span><span class="p">.</span><span class="nx">nagios</span> <span class="o">or</span> <span class="p">{}</span>
+<span class="nv">config.nagios.apiPath = </span><span class="s2">&quot;/cgi-bin/status-json.cgi&quot;</span>
+<span class="nv">config.nagios.auth = </span><span class="s2">&quot;HTTPBasic&quot;</span> <span class="c1"># set to null for no auth</span>
+<span class="nv">config.nagios.interval = </span><span class="mi">2000000</span> <span class="c1"># in ms</span>
+<span class="nv">config.nagios.defaultServer = </span><span class="s2">&quot;mconf.org&quot;</span>
+<span class="nv">config.nagios.bbbService = </span><span class="s2">&quot;BigBlueButton Info&quot;</span>
+<span class="nv">config.nagios.services = </span><span class="p">[</span> <span class="s2">&quot;BigBlueButton Info&quot;</span><span class="p">,</span> <span class="s2">&quot;Network Report&quot;</span><span class="p">,</span> <span class="s2">&quot;Processor Report&quot;</span><span class="p">,</span> <span class="s2">&quot;Memory Report&quot;</span> <span class="p">]</span></div></div></div><div class="segment"><div class="comments"><div class="wrapper"><h2 id="bigbluebutton-module-configs">BigBlueButton module configs</h2></div></div></div><div class="segment"><div class="code"><div class="wrapper"><span class="nv">config.bbb = </span><span class="nx">config</span><span class="p">.</span><span class="nx">bbb</span> <span class="o">or</span> <span class="p">{}</span>
+<span class="nv">config.bbb.apiPath = </span><span class="s2">&quot;/bigbluebutton/api&quot;</span>
+<span class="nv">config.bbb.responses = </span><span class="p">{}</span>
+<span class="nv">config.bbb.responses.checksumError =</span>
+  <span class="s2">&quot;&lt;response&gt; \</span>
+<span class="s2">     &lt;returncode&gt;FAILED&lt;/returncode&gt; \</span>
+<span class="s2">     &lt;messageKey&gt;checksumError&lt;/messageKey&gt; \</span>
+<span class="s2">     &lt;message&gt;You did not pass the checksum security check&lt;/message&gt; \</span>
+<span class="s2">   &lt;/response&gt;&quot;</span>
+<span class="nv">config.bbb.responses.apiIndex =</span>
+   <span class="s2">&quot;&lt;response&gt; \</span>
+<span class="s2">      &lt;returncode&gt;SUCCESS&lt;/returncode&gt; \</span>
+<span class="s2">      &lt;version&gt;0.8&lt;/version&gt; \</span>
+<span class="s2">      &lt;name&gt;mconf-bbb-lb&lt;/name&gt; \</span>
+<span class="s2">    &lt;/response&gt;&quot;</span>
+<span class="nv">config.bbb.responses.invalidMeeting = </span><span class="c1"># only used when there are no servers registered</span>
+  <span class="s2">&quot;&lt;response&gt; \</span>
+<span class="s2">     &lt;returncode&gt;FAILED&lt;/returncode&gt; \</span>
+<span class="s2">     &lt;messageKey&gt;invalidMeetingIdentifier&lt;/messageKey&gt; \</span>
+<span class="s2">     &lt;message&gt;The meeting ID that you supplied did not match any existing meetings&lt;/message&gt; \</span>
+<span class="s2">   &lt;/response&gt;&quot;</span></div></div></div><div class="segment"><div class="comments"><div class="wrapper"><h2 id="mobile-module-configs">Mobile module configs</h2></div></div></div><div class="segment"><div class="code"><div class="wrapper"><span class="nv">config.bbb.mobile = </span><span class="p">{}</span>
+<span class="nv">config.bbb.mobile.path = </span><span class="s2">&quot;/demo/mobile.jsp&quot;</span>
+<span class="nv">config.bbb.mobile.timestamp = </span><span class="kc">null</span>
+<span class="nv">config.bbb.mobile.responses = </span><span class="p">{}</span>
+<span class="nv">config.bbb.mobile.responses.getTimestamp =</span>
+  <span class="s2">&quot;&lt;response&gt; \</span>
+<span class="s2">     &lt;returncode&gt;SUCCESS&lt;/returncode&gt; \</span>
+<span class="s2">     &lt;timestamp&gt;%%TIMESTAMP%%&lt;/timestamp&gt; \</span>
+<span class="s2">   &lt;/response&gt;&quot;</span>
+<span class="nv">config.bbb.mobile.responses.timestampError =</span>
+  <span class="s2">&quot;&lt;meetings&gt; \</span>
+<span class="s2">     &lt;meeting&gt; \</span>
+<span class="s2">       &lt;returncode&gt;FAILED&lt;/returncode&gt; \</span>
+<span class="s2">     &lt;/meeting&gt; \</span>
+<span class="s2">   &lt;/meetings&gt;&quot;</span>
+<span class="nv">config.bbb.mobile.responses.defaultError = </span><span class="nx">config</span><span class="p">.</span><span class="nx">bbb</span><span class="p">.</span><span class="nx">mobile</span><span class="p">.</span><span class="nx">responses</span><span class="p">.</span><span class="nx">timestampError</span></div></div></div><div class="segment"><div class="comments"><div class="wrapper"><p>for reference, in case we need process.env in the future:
+config.twitter.user<em>name = process.env.TWITTER</em>USER or 'username'</p></div></div><div class="code"><div class="wrapper"><span class="nv">module.exports = </span><span class="nx">config</span></div></div></div></div></body></html>

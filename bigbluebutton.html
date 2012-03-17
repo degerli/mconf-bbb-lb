@@ -1,0 +1,112 @@
+<!DOCTYPE html><html lang="en"><head><title>bigbluebutton</title></head><meta http-equiv="Content-Type" content="text/html; charset=utf-8"><meta name="viewport" content="width=device-width, initial-scale=1.0, minimum-scale=1.0, maximum-scale=1.0"><meta name="groc-relative-root" content=""><meta name="groc-document-path" content="bigbluebutton"><meta name="groc-project-path" content="lib/bigbluebutton.coffee"><meta name="groc-github-url" content="https://github.com/mconf/mconf-bbb-lb"><link rel="stylesheet" type="text/css" media="all" href="assets/style.css"><script type="text/javascript" src="assets/behavior.js"></script><body><div id="meta"><div class="file-path"><a href="https://github.com/mconf/mconf-bbb-lb/blob/master/lib/bigbluebutton.coffee">lib/bigbluebutton.coffee</a></div></div><div id="document"><div class="segment"><div class="comments"><div class="wrapper"><h1 id="bigbluebutton-module">BigBlueButton module</h1>
+
+<p>Methods that require in-depth knowledge of how BigBlueButton works
+should be here. Such as parsing XML responses.</p></div></div><div class="code"><div class="wrapper"><span class="nv">Logger = </span><span class="nx">require</span><span class="p">(</span><span class="s2">&quot;./logger&quot;</span><span class="p">)</span>
+<span class="nv">Meeting = </span><span class="nx">require</span><span class="p">(</span><span class="s2">&quot;../models/meeting&quot;</span><span class="p">)</span>
+<span class="nv">Server = </span><span class="nx">require</span><span class="p">(</span><span class="s2">&quot;../models/server&quot;</span><span class="p">)</span>
+<span class="nv">Utils = </span><span class="nx">require</span><span class="p">(</span><span class="s2">&quot;./utils&quot;</span><span class="p">)</span>
+<span class="nv">config = </span><span class="nx">require</span><span class="p">(</span><span class="s2">&quot;../config&quot;</span><span class="p">)</span>
+<span class="nv">sha1 = </span><span class="nx">require</span><span class="p">(</span><span class="s2">&quot;sha1&quot;</span><span class="p">)</span>
+<span class="nv">url = </span><span class="nx">require</span><span class="p">(</span><span class="s2">&quot;url&quot;</span><span class="p">)</span>
+<span class="nv">xml2js = </span><span class="nx">require</span><span class="p">(</span><span class="s2">&quot;xml2js&quot;</span><span class="p">)</span>
+
+<span class="nv">BigBlueButton = </span><span class="nx">exports</span></div></div></div><div class="segment"><div class="comments"><div class="wrapper"><p>Calculates the checksum given a url <code>fullUrl</code> and a <code>salt</code>.
+<code>incoming</code> should be true if the checksum is to match an incoming
+message. <code>mobile</code> should be true if the checksum is for a mobile request.</p></div></div><div class="code"><div class="wrapper"><span class="nv">BigBlueButton.checksum = </span><span class="nf">(fullUrl, salt, incoming, mobile) -&gt;</span></div></div></div><div class="segment"><div class="comments"><div class="wrapper"><p>Parse the url and remove the old checksum</p></div></div><div class="code"><div class="wrapper">  <span class="nv">urlObj = </span><span class="nx">url</span><span class="p">.</span><span class="nx">parse</span><span class="p">(</span><span class="nx">fullUrl</span><span class="p">,</span> <span class="kc">true</span><span class="p">)</span>
+  <span class="nx">Utils</span><span class="p">.</span><span class="nx">removeParamFromUrl</span> <span class="nx">urlObj</span><span class="p">,</span> <span class="s2">&quot;checksum&quot;</span></div></div></div><div class="segment"><div class="comments"><div class="wrapper"><p>Get the expected checksum</p></div></div><div class="code"><div class="wrapper">  <span class="nv">query = </span><span class="nx">Utils</span><span class="p">.</span><span class="nx">bbbQueryFromUrl</span><span class="p">(</span><span class="nx">urlObj</span><span class="p">)</span>
+  <span class="k">if</span> <span class="nx">incoming</span><span class="o">?</span> <span class="o">and</span> <span class="nx">incoming</span></div></div></div><div class="segment"><div class="comments"><div class="wrapper"><p><strong>Note</strong>: the url query is already escaped, however BBB expects a space to
+be encoded as <code>+</code>, but any space or <code>+</code> in the query are replaced by
+<code>%20</code> in the <code>url.parse()</code> call above.
+So when we're sending a call to BBB, we encode it using <code>%20</code>, but
+when we are receiving a call (incoming), we should expect that the
+salt was calculated using <code>+</code> where we have <code>%20</code>'s</p></div></div><div class="code"><div class="wrapper">    <span class="nv">query = </span><span class="nx">query</span><span class="p">.</span><span class="nx">replace</span><span class="p">(</span><span class="sr">/%20/g</span><span class="p">,</span> <span class="s2">&quot;+&quot;</span><span class="p">)</span>
+
+  <span class="k">if</span> <span class="nx">mobile</span><span class="o">?</span> <span class="o">and</span> <span class="nx">mobile</span>
+    <span class="nv">checksum = </span><span class="nx">sha1</span><span class="p">(</span><span class="nx">query</span> <span class="o">+</span> <span class="nx">salt</span><span class="p">)</span>
+  <span class="k">else</span>
+    <span class="nv">method = </span><span class="nx">Utils</span><span class="p">.</span><span class="nx">bbbMethodFromUrl</span><span class="p">(</span><span class="nx">urlObj</span><span class="p">)</span>
+    <span class="nv">checksum = </span><span class="nx">sha1</span><span class="p">(</span><span class="nx">method</span> <span class="o">+</span> <span class="nx">query</span> <span class="o">+</span> <span class="nx">salt</span><span class="p">)</span>
+  <span class="nx">checksum</span></div></div></div><div class="segment"><div class="comments"><div class="wrapper"><p>Receives an array with responses from getMeetings calls
+and generates a response with all the meetings available.
+FIXME: maybe we should prevent duplicated meeting ids?</p></div></div><div class="code"><div class="wrapper"><span class="nv">BigBlueButton.concatenateGetMeetings = </span><span class="nf">(responses) -&gt;</span>
+  <span class="nv">selected = </span><span class="kc">null</span>
+  <span class="nv">meetingList = </span><span class="p">[]</span></div></div></div><div class="segment"><div class="comments"><div class="wrapper"><p>At first we'll select one of the responses to be used
+as a base for our response and create an array with
+all meetings found in the responses</p></div></div><div class="code"><div class="wrapper">  <span class="k">for</span> <span class="nx">id</span> <span class="k">of</span> <span class="nx">responses</span>
+    <span class="nv">response = </span><span class="nx">responses</span><span class="p">[</span><span class="nx">id</span><span class="p">]</span></div></div></div><div class="segment"><div class="comments"><div class="wrapper"><p>If the response has meetings, select it as the base for our response</p></div></div><div class="code"><div class="wrapper">    <span class="nv">hasMeetings = </span><span class="nx">response</span><span class="p">.</span><span class="nx">match</span><span class="p">(</span><span class="sr">/&lt;meetings&gt;(.*)&lt;\/meetings&gt;/</span><span class="p">)</span>
+    <span class="k">if</span> <span class="nx">hasMeetings</span><span class="o">?</span>
+      <span class="nv">selected = </span><span class="nx">response</span>
+      <span class="nx">meetingList</span><span class="p">.</span><span class="nx">push</span> <span class="nx">hasMeetings</span><span class="p">[</span><span class="mi">1</span><span class="p">]</span></div></div></div><div class="segment"><div class="comments"><div class="wrapper"><p>If the response has no meetings, but was successful, select it
+for now. if we're at the last response and there's none selected,
+select it even if it's an error response</p></div></div><div class="code"><div class="wrapper">    <span class="k">if</span> <span class="o">not</span> <span class="nx">selected</span><span class="o">?</span> <span class="o">and</span> <span class="p">(</span><span class="nx">BigBlueButton</span><span class="p">.</span><span class="nx">isSuccessfulResponse</span><span class="p">(</span><span class="nx">response</span><span class="p">)</span> <span class="o">or</span> <span class="nx">id</span> <span class="o">is</span> <span class="nx">responses</span><span class="p">.</span><span class="nx">length</span> <span class="o">-</span> <span class="mi">1</span><span class="p">)</span>
+      <span class="nv">selected = </span><span class="nx">response</span></div></div></div><div class="segment"><div class="comments"><div class="wrapper"><p>If there's at least 1 meeting, we add it to our selected response</p></div></div><div class="code"><div class="wrapper">  <span class="k">if</span> <span class="nx">meetingList</span><span class="p">.</span><span class="nx">length</span> <span class="o">&gt;</span> <span class="mi">0</span>
+    <span class="nv">meetingStr = </span><span class="s2">&quot;&lt;meetings&gt;&quot;</span> <span class="o">+</span> <span class="nx">meetingList</span><span class="p">.</span><span class="nx">join</span><span class="p">(</span><span class="s2">&quot;&quot;</span><span class="p">)</span> <span class="o">+</span> <span class="s2">&quot;&lt;/meetings&gt;&quot;</span>
+    <span class="nv">selected = </span><span class="nx">selected</span><span class="p">.</span><span class="nx">replace</span><span class="p">(</span><span class="sr">/&lt;meetings&gt;.*&lt;\/meetings&gt;/</span><span class="p">,</span> <span class="nx">meetingStr</span><span class="p">)</span>
+
+  <span class="nx">selected</span></div></div></div><div class="segment"><div class="comments"><div class="wrapper"><p>Method used as a callback for when the module nagios updates the
+list of servers</p></div></div><div class="code"><div class="wrapper"><span class="nv">BigBlueButton.nagiosCallback = </span><span class="nf">(error) -&gt;</span>
+  <span class="k">if</span> <span class="nx">error</span>
+    <span class="nx">Logger</span><span class="p">.</span><span class="nx">log</span> <span class="s2">&quot;error getting the servers from Nagios, will not modify the meetings db&quot;</span>
+  <span class="k">else</span>
+    <span class="nx">Logger</span><span class="p">.</span><span class="nx">log</span> <span class="s2">&quot;repopulating the meetings db&quot;</span>
+    <span class="nx">BigBlueButton</span><span class="p">.</span><span class="nx">repopulateMeetings</span><span class="p">()</span></div></div></div><div class="segment"><div class="comments"><div class="wrapper"><p>Sends a <code>getMeetings</code> request to all registered servers and use the responses
+to create the database of meetings.
+FIXME: if there are meetings with duplicated meetingID's, the last one parsed
+       will be the one used, the others are ignored</p></div></div><div class="code"><div class="wrapper"><span class="nv">BigBlueButton.repopulateMeetings = </span><span class="o">-&gt;</span>
+  <span class="nv">meetings = </span><span class="p">[]</span>
+
+  <span class="nx">BigBlueButton</span><span class="p">.</span><span class="nx">sendGetMeetingsToAll</span> <span class="nf">(error, body, server) -&gt;</span>
+    <span class="k">if</span> <span class="nx">error</span>
+      <span class="nx">Logger</span><span class="p">.</span><span class="nx">log</span> <span class="s2">&quot;error calling getMeetings to &quot;</span> <span class="o">+</span> <span class="nx">server</span><span class="p">.</span><span class="nx">name</span> <span class="o">+</span> <span class="s2">&quot;: &quot;</span> <span class="o">+</span> <span class="nx">error</span>
+      <span class="nx">meetings</span><span class="p">.</span><span class="nx">push</span> <span class="kc">null</span>
+    <span class="k">else</span></div></div></div><div class="segment"><div class="comments"><div class="wrapper"><p>Get the meetings in the XML and push to an array</p></div></div><div class="code"><div class="wrapper">      <span class="nx">meetings</span><span class="p">.</span><span class="nx">push</span> <span class="nx">BigBlueButton</span><span class="p">.</span><span class="nx">meetingsFromGetMeetings</span><span class="p">(</span><span class="nx">body</span><span class="p">,</span> <span class="nx">server</span><span class="p">)</span>
+
+      <span class="nx">Logger</span><span class="p">.</span><span class="nx">log</span> <span class="s2">&quot;got response to getMeeting from &quot;</span> <span class="o">+</span> <span class="nx">server</span><span class="p">.</span><span class="nx">name</span>
+      <span class="nx">unless</span> <span class="nx">BigBlueButton</span><span class="p">.</span><span class="nx">isSuccessfulResponse</span><span class="p">(</span><span class="nx">body</span><span class="p">)</span>
+        <span class="nx">Logger</span><span class="p">.</span><span class="nx">log</span> <span class="s2">&quot;got error in the response:&quot;</span>
+        <span class="nx">Logger</span><span class="p">.</span><span class="nx">log</span> <span class="nx">body</span>
+
+  <span class="p">,</span> <span class="nf">(total) -&gt;</span></div></div></div><div class="segment"><div class="comments"><div class="wrapper"><p>After we've got all the responses, replace the meetings db and print them</p></div></div><div class="code"><div class="wrapper">    <span class="nx">Utils</span><span class="p">.</span><span class="nx">updateMeetings</span> <span class="nx">Utils</span><span class="p">.</span><span class="nx">flatten</span><span class="p">(</span><span class="nx">meetings</span><span class="p">)</span></div></div></div><div class="segment"><div class="comments"><div class="wrapper"><p>Parses the XML in <code>data</code> (result from <code>getMeetings</code>) and returns an array
+of Meeting's with the meetings in the XML.</p></div></div><div class="code"><div class="wrapper"><span class="nv">BigBlueButton.meetingsFromGetMeetings = </span><span class="nf">(data, server) -&gt;</span>
+  <span class="nv">result = </span><span class="p">[]</span>
+  <span class="nv">parser = </span><span class="k">new</span> <span class="nx">xml2js</span><span class="p">.</span><span class="nx">Parser</span><span class="p">()</span>
+
+  <span class="nx">parser</span><span class="p">.</span><span class="nx">parseString</span> <span class="nx">data</span><span class="p">,</span> <span class="nf">(error, parsed) -&gt;</span>
+    <span class="k">if</span> <span class="nx">error</span>
+      <span class="nx">Logger</span><span class="p">.</span><span class="nx">log</span> <span class="s2">&quot;error parsing the result of getMeetings: &quot;</span> <span class="o">+</span> <span class="nx">data</span>
+    <span class="k">else</span>
+      <span class="k">if</span> <span class="nx">parsed</span><span class="p">[</span><span class="s2">&quot;meetings&quot;</span><span class="p">]</span><span class="o">?</span>
+        <span class="nv">meetings = </span><span class="nx">parsed</span><span class="p">[</span><span class="s2">&quot;meetings&quot;</span><span class="p">][</span><span class="s2">&quot;meeting&quot;</span><span class="p">]</span>
+        <span class="k">if</span> <span class="nx">meetings</span><span class="o">?</span></div></div></div><div class="segment"><div class="comments"><div class="wrapper"><p>When there's 1 meeting, BBB returns an object
+with >1 meetings it is an array</p></div></div><div class="code"><div class="wrapper">          <span class="k">if</span> <span class="nx">Utils</span><span class="p">.</span><span class="nx">realTypeOf</span><span class="p">(</span><span class="nx">meetings</span><span class="p">)</span> <span class="o">is</span> <span class="s2">&quot;Array&quot;</span>
+            <span class="k">for</span> <span class="nx">id</span> <span class="k">of</span> <span class="nx">meetings</span>
+              <span class="nv">meeting = </span><span class="k">new</span> <span class="nx">Meeting</span><span class="p">(</span><span class="nx">meetings</span><span class="p">[</span><span class="nx">id</span><span class="p">][</span><span class="s2">&quot;meetingID&quot;</span><span class="p">],</span> <span class="nx">server</span><span class="p">,</span> <span class="nx">meetings</span><span class="p">[</span><span class="nx">id</span><span class="p">][</span><span class="s2">&quot;moderatorPW&quot;</span><span class="p">])</span>
+              <span class="nx">result</span><span class="p">.</span><span class="nx">push</span> <span class="nx">meeting</span>
+          <span class="k">else</span>
+            <span class="nv">meeting = </span><span class="k">new</span> <span class="nx">Meeting</span><span class="p">(</span><span class="nx">meetings</span><span class="p">[</span><span class="s2">&quot;meetingID&quot;</span><span class="p">],</span> <span class="nx">server</span><span class="p">,</span> <span class="nx">meetings</span><span class="p">[</span><span class="s2">&quot;moderatorPW&quot;</span><span class="p">])</span>
+            <span class="nx">result</span><span class="p">.</span><span class="nx">push</span> <span class="nx">meeting</span>
+
+  <span class="nx">result</span></div></div></div><div class="segment"><div class="comments"><div class="wrapper"><p>Gets an url in <code>originalUrl</code> and formats it to be sent to a BBB server
+<code>originalUrl</code> in the format:</p>
+
+<ul>
+<li><code>/bigbluebutton/api/getMeetings?random=123...</code>.</li>
+</ul></div></div><div class="code"><div class="wrapper"><span class="nv">BigBlueButton.formatBBBUrl = </span><span class="nf">(originalUrl, server) -&gt;</span></div></div></div><div class="segment"><div class="comments"><div class="wrapper"><p>Parse the url and change the checksum</p></div></div><div class="code"><div class="wrapper">  <span class="nv">urlObj = </span><span class="nx">url</span><span class="p">.</span><span class="nx">parse</span><span class="p">(</span><span class="nx">originalUrl</span><span class="p">,</span> <span class="kc">true</span><span class="p">)</span>
+  <span class="nx">Utils</span><span class="p">.</span><span class="nx">removeParamFromUrl</span> <span class="nx">urlObj</span><span class="p">,</span> <span class="s2">&quot;checksum&quot;</span>
+  <span class="nx">urlObj</span><span class="p">.</span><span class="nx">query</span><span class="p">[</span><span class="s2">&quot;checksum&quot;</span><span class="p">]</span> <span class="o">=</span> <span class="nx">BigBlueButton</span><span class="p">.</span><span class="nx">checksum</span><span class="p">(</span><span class="nx">originalUrl</span><span class="p">,</span> <span class="nx">server</span><span class="p">.</span><span class="nx">salt</span><span class="p">)</span>
+
+  <span class="nx">server</span><span class="p">.</span><span class="nx">url</span> <span class="o">+</span> <span class="nx">url</span><span class="p">.</span><span class="nx">format</span><span class="p">(</span><span class="nx">urlObj</span><span class="p">)</span></div></div></div><div class="segment"><div class="comments"><div class="wrapper"><p>Returns whether an XML response from a BBB server is successful or not.</p></div></div><div class="code"><div class="wrapper"><span class="nv">BigBlueButton.isSuccessfulResponse = </span><span class="nf">(body) -&gt;</span>
+  <span class="nx">body</span><span class="p">.</span><span class="nx">match</span> <span class="sr">/&lt;returncode&gt;SUCCESS/</span></div></div></div><div class="segment"><div class="comments"><div class="wrapper"><p>Sends a <code>getMeetings</code> to all servers registered.
+Calls <code>afterEach</code> after each response and <code>afterAll</code> after all responses
+are received (or after they timed-out).
+TODO: check what happens if one connection times out</p></div></div><div class="code"><div class="wrapper"><span class="nv">BigBlueButton.sendGetMeetingsToAll = </span><span class="nf">(afterEach, afterAll) -&gt;</span>
+  <span class="nv">received = </span><span class="mi">0</span>
+  <span class="nv">servers = </span><span class="nx">Server</span><span class="p">.</span><span class="nx">allSync</span><span class="p">()</span>
+
+  <span class="k">for</span> <span class="nx">id</span> <span class="k">of</span> <span class="nx">servers</span>
+    <span class="nv">rand = </span><span class="nb">Math</span><span class="p">.</span><span class="nx">floor</span><span class="p">(</span><span class="nb">Math</span><span class="p">.</span><span class="nx">random</span><span class="p">()</span> <span class="o">*</span> <span class="mi">10000000000</span><span class="p">)</span> <span class="c1"># BBB 0.7 needs it</span>
+    <span class="nv">request = </span><span class="nx">config</span><span class="p">.</span><span class="nx">bbb</span><span class="p">.</span><span class="nx">apiPath</span> <span class="o">+</span> <span class="s2">&quot;/getMeetings?random=&quot;</span> <span class="o">+</span> <span class="nx">rand</span>
+    <span class="nx">Utils</span><span class="p">.</span><span class="nx">requestToServer</span> <span class="nx">request</span><span class="p">,</span> <span class="nx">servers</span><span class="p">[</span><span class="nx">id</span><span class="p">],</span> <span class="nf">(error, response, body, server) -&gt;</span>
+      <span class="nx">received</span><span class="o">++</span>
+      <span class="nx">afterEach</span> <span class="nx">error</span><span class="p">,</span> <span class="nx">body</span><span class="p">,</span> <span class="nx">server</span>
+      <span class="nx">afterAll</span> <span class="nx">received</span>  <span class="k">if</span> <span class="nx">received</span> <span class="o">is</span> <span class="nx">servers</span><span class="p">.</span><span class="nx">length</span></div></div></div></div></body></html>

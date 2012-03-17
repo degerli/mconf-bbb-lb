@@ -1,0 +1,70 @@
+<!DOCTYPE html><html lang="en"><head><title>load_balancer</title></head><meta http-equiv="Content-Type" content="text/html; charset=utf-8"><meta name="viewport" content="width=device-width, initial-scale=1.0, minimum-scale=1.0, maximum-scale=1.0"><meta name="groc-relative-root" content=""><meta name="groc-document-path" content="load_balancer"><meta name="groc-project-path" content="lib/load_balancer.coffee"><meta name="groc-github-url" content="https://github.com/mconf/mconf-bbb-lb"><link rel="stylesheet" type="text/css" media="all" href="assets/style.css"><script type="text/javascript" src="assets/behavior.js"></script><body><div id="meta"><div class="file-path"><a href="https://github.com/mconf/mconf-bbb-lb/blob/master/lib/load_balancer.coffee">lib/load_balancer.coffee</a></div></div><div id="document"><div class="segment"><div class="comments"><div class="wrapper"><h1 id="loadbalancer-module">LoadBalancer module</h1>
+
+<p>Responsible for balancing the requests.</p></div></div><div class="code"><div class="wrapper"><span class="nv">BigBlueButton = </span><span class="nx">require</span><span class="p">(</span><span class="s2">&quot;../lib/bigbluebutton&quot;</span><span class="p">)</span>
+<span class="nv">Logger = </span><span class="nx">require</span><span class="p">(</span><span class="s2">&quot;../lib/logger&quot;</span><span class="p">)</span>
+<span class="nv">Server = </span><span class="nx">require</span><span class="p">(</span><span class="s2">&quot;../models/server&quot;</span><span class="p">)</span>
+<span class="nv">Utils = </span><span class="nx">require</span><span class="p">(</span><span class="s2">&quot;../lib/utils&quot;</span><span class="p">)</span>
+<span class="nv">config = </span><span class="nx">require</span><span class="p">(</span><span class="s2">&quot;../config&quot;</span><span class="p">)</span>
+<span class="nv">request = </span><span class="nx">require</span><span class="p">(</span><span class="s2">&quot;request&quot;</span><span class="p">)</span>
+<span class="nv">url = </span><span class="nx">require</span><span class="p">(</span><span class="s2">&quot;url&quot;</span><span class="p">)</span>
+
+<span class="nv">LoadBalancer = </span><span class="nx">exports</span></div></div></div><div class="segment"><div class="comments"><div class="wrapper"><p>Selects the adequate BigBlueButton server for a new meeting
+to be created</p></div></div><div class="code"><div class="wrapper"><span class="nv">LoadBalancer.selectServer = </span><span class="o">-&gt;</span>
+  <span class="nv">count = </span><span class="o">-</span><span class="mi">1</span>
+  <span class="nv">newCount = </span><span class="mi">0</span>
+  <span class="nv">s = </span><span class="kc">null</span>
+
+  <span class="nx">Logger</span><span class="p">.</span><span class="nx">log</span> <span class="s2">&quot;selecting a server for a new meeting&quot;</span></div></div></div><div class="segment"><div class="comments"><div class="wrapper"><p>For now we select the server with the lowest number of users connected</p></div></div><div class="code"><div class="wrapper">  <span class="nv">servers = </span><span class="nx">Server</span><span class="p">.</span><span class="nx">allSync</span><span class="p">()</span>
+  <span class="nv">selected = </span><span class="nx">servers</span><span class="p">[</span><span class="mi">0</span><span class="p">]</span>
+  <span class="k">for</span> <span class="nx">id</span> <span class="k">of</span> <span class="nx">servers</span>
+    <span class="nv">s = </span><span class="nx">servers</span><span class="p">[</span><span class="nx">id</span><span class="p">]</span>
+    <span class="nv">newCount = </span><span class="nx">s</span><span class="p">.</span><span class="nx">getMeetingCountSync</span><span class="p">()</span>
+
+    <span class="nx">unless</span> <span class="nx">newCount</span> <span class="o">is</span> <span class="o">-</span><span class="mi">1</span> <span class="c1"># -1 means disabled</span>
+      <span class="nx">Logger</span><span class="p">.</span><span class="nx">log</span> <span class="s2">&quot;server &quot;</span> <span class="o">+</span> <span class="nx">s</span><span class="p">.</span><span class="nx">name</span> <span class="o">+</span> <span class="s2">&quot; has &quot;</span> <span class="o">+</span> <span class="nx">newCount</span> <span class="o">+</span> <span class="s2">&quot; meetings&quot;</span>
+      <span class="k">if</span> <span class="nx">newCount</span> <span class="o">&lt;</span> <span class="nx">count</span> <span class="o">or</span> <span class="nx">count</span> <span class="o">is</span> <span class="o">-</span><span class="mi">1</span>
+        <span class="nv">selected = </span><span class="nx">s</span>
+        <span class="nv">count = </span><span class="nx">newCount</span>
+    <span class="k">else</span>
+      <span class="nx">Logger</span><span class="p">.</span><span class="nx">log</span> <span class="s2">&quot;server &quot;</span> <span class="o">+</span> <span class="nx">s</span><span class="p">.</span><span class="nx">name</span> <span class="o">+</span> <span class="s2">&quot; is disabled&quot;</span>
+
+  <span class="nx">selected</span><span class="p">.</span><span class="nx">incMeetingCountSync</span><span class="p">()</span>
+  <span class="nx">Logger</span><span class="p">.</span><span class="nx">log</span> <span class="s2">&quot;server selected: &quot;</span> <span class="o">+</span> <span class="nx">selected</span><span class="p">.</span><span class="nx">name</span> <span class="o">+</span> <span class="s2">&quot; with &quot;</span> <span class="o">+</span> <span class="nx">count</span> <span class="o">+</span> <span class="s2">&quot; meetings&quot;</span>
+  <span class="nx">Logger</span><span class="p">.</span><span class="nx">log</span> <span class="s2">&quot;server selected has now &quot;</span> <span class="o">+</span> <span class="p">(</span><span class="nx">count</span> <span class="o">+</span> <span class="mi">1</span><span class="p">)</span> <span class="o">+</span> <span class="s2">&quot; meetings&quot;</span>
+  <span class="nx">selected</span></div></div></div><div class="segment"><div class="comments"><div class="wrapper"><p>Returns the default server, used when we don't know in which server
+the meeting is in (usually resulting in an error message)</p></div></div><div class="code"><div class="wrapper"><span class="nv">LoadBalancer.defaultServer = </span><span class="o">-&gt;</span>
+  <span class="nv">server = </span><span class="nx">Server</span><span class="p">.</span><span class="nx">getSync</span><span class="p">(</span><span class="nx">config</span><span class="p">.</span><span class="nx">nagios</span><span class="p">.</span><span class="nx">defaultServer</span><span class="p">)</span>
+  <span class="k">if</span> <span class="nx">server</span><span class="o">?</span>
+    <span class="nx">server</span>
+  <span class="k">else</span></div></div></div><div class="segment"><div class="comments"><div class="wrapper"><p>If we don't find the default server, use the first one</p></div></div><div class="code"><div class="wrapper">    <span class="nx">Server</span><span class="p">.</span><span class="nx">firstSync</span><span class="p">()</span></div></div></div><div class="segment"><div class="comments"><div class="wrapper"><p>Handles a request <code>req</code> to the BigBlueButton <code>server</code>.
+If <code>useProxy</code>, the request will be 'proxied', otherwise it will respond with
+a redirect to the BigBluebutton server.
+Also, if <code>useProxy</code>, <code>beforeSend</code> will be called when we receive a response from BBB
+and before sending it to the user. If not <code>useProxy</code>, <code>beforeSend</code> is called
+before returning the redirect to the user. <code>beforeSend</code> parameters are:</p>
+
+<ul>
+<li><code>isProxy</code>: true if the request being proxied.</li>
+<li><code>data</code>: the data received from the BBB server (if any).</li>
+</ul></div></div><div class="code"><div class="wrapper"><span class="nv">LoadBalancer.handle = </span><span class="nf">(req, res, server, useProxy, beforeSend) -&gt;</span>
+  <span class="nx">Logger</span><span class="p">.</span><span class="nx">log</span> <span class="s2">&quot;handling the request to the server &quot;</span> <span class="o">+</span> <span class="nx">server</span><span class="p">.</span><span class="nx">url</span>
+  <span class="nv">newUrl = </span><span class="nx">BigBlueButton</span><span class="p">.</span><span class="nx">formatBBBUrl</span><span class="p">(</span><span class="nx">req</span><span class="p">.</span><span class="nx">url</span><span class="p">,</span> <span class="nx">server</span><span class="p">)</span></div></div></div><div class="segment"><div class="comments"><div class="wrapper"><p>If not specified, use the default in the config</p></div></div><div class="code"><div class="wrapper">  <span class="nv">useProxy = </span><span class="nx">config</span><span class="p">.</span><span class="nx">lb</span><span class="p">.</span><span class="nx">proxy</span> <span class="nx">unless</span> <span class="nx">useProxy</span><span class="o">?</span>
+  <span class="k">if</span> <span class="nx">useProxy</span>
+    <span class="nx">LoadBalancer</span><span class="p">.</span><span class="nx">proxy</span> <span class="nx">res</span><span class="p">,</span> <span class="nx">newUrl</span><span class="p">,</span> <span class="nx">beforeSend</span>
+  <span class="k">else</span>
+    <span class="nx">LoadBalancer</span><span class="p">.</span><span class="nx">redirect</span> <span class="nx">res</span><span class="p">,</span> <span class="nx">newUrl</span><span class="p">,</span> <span class="nx">beforeSend</span></div></div></div><div class="segment"><div class="comments"><div class="wrapper"><p>Redirects a request to <code>destination</code> (a uri).</p></div></div><div class="code"><div class="wrapper"><span class="nv">LoadBalancer.redirect = </span><span class="nf">(res, destination, beforeSend) -&gt;</span>
+  <span class="nx">Logger</span><span class="p">.</span><span class="nx">log</span> <span class="s2">&quot;full redirect api call to &quot;</span> <span class="o">+</span> <span class="nx">destination</span>
+  <span class="nx">beforeSend</span> <span class="kc">false</span><span class="p">,</span> <span class="kc">null</span> <span class="k">if</span> <span class="nx">beforeSend</span><span class="o">?</span>
+  <span class="nx">res</span><span class="p">.</span><span class="nx">redirect</span> <span class="nx">destination</span></div></div></div><div class="segment"><div class="comments"><div class="wrapper"><p>Proxies a request to <code>destination</code> (a uri).</p></div></div><div class="code"><div class="wrapper"><span class="nv">LoadBalancer.proxy = </span><span class="nf">(res, destination, beforeSend) -&gt;</span>
+  <span class="nx">Logger</span><span class="p">.</span><span class="nx">log</span> <span class="s2">&quot;proxying api call to &quot;</span> <span class="o">+</span> <span class="nx">destination</span>
+  <span class="nv">opt =</span>
+    <span class="nv">url: </span><span class="nx">destination</span>
+    <span class="nv">timeout: </span><span class="nx">config</span><span class="p">.</span><span class="nx">lb</span><span class="p">.</span><span class="nx">requestTimeout</span>
+
+  <span class="nx">request</span> <span class="nx">opt</span><span class="p">,</span> <span class="nf">(error, response, body) -&gt;</span>
+    <span class="k">if</span> <span class="nx">error</span>
+      <span class="nx">Logger</span><span class="p">.</span><span class="nx">log</span> <span class="s2">&quot;error proxying the request: &quot;</span> <span class="o">+</span> <span class="nx">error</span>
+    <span class="k">else</span>
+      <span class="nx">Logger</span><span class="p">.</span><span class="nx">log</span> <span class="s2">&quot;got the response from BBB, sending it to the user.&quot;</span></div></div></div><div class="segment"><div class="comments"><div class="wrapper"><p>Copy the headers from BBB and send it back to the user</p></div></div><div class="code"><div class="wrapper">      <span class="nx">Utils</span><span class="p">.</span><span class="nx">copyHeaders</span> <span class="nx">response</span><span class="p">,</span> <span class="nx">res</span>
+      <span class="nx">beforeSend</span> <span class="kc">true</span><span class="p">,</span> <span class="nx">body</span> <span class="k">if</span> <span class="nx">beforeSend</span><span class="o">?</span>
+      <span class="nx">res</span><span class="p">.</span><span class="nx">send</span> <span class="nx">body</span></div></div></div></div></body></html>

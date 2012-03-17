@@ -1,0 +1,8 @@
+*~
+**/#*#
+*.log
+node_modules/
+.data.json
+config_local.coffee
+debug.log
+doc/

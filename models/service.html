@@ -1,0 +1,21 @@
+<!DOCTYPE html><html lang="en"><head><title>models/service</title></head><meta http-equiv="Content-Type" content="text/html; charset=utf-8"><meta name="viewport" content="width=device-width, initial-scale=1.0, minimum-scale=1.0, maximum-scale=1.0"><meta name="groc-relative-root" content="../"><meta name="groc-document-path" content="models/service"><meta name="groc-project-path" content="models/service.coffee"><meta name="groc-github-url" content="https://github.com/mconf/mconf-bbb-lb"><link rel="stylesheet" type="text/css" media="all" href="../assets/style.css"><script type="text/javascript" src="../assets/behavior.js"></script><body><div id="meta"><div class="file-path"><a href="https://github.com/mconf/mconf-bbb-lb/blob/master/models/service.coffee">models/service.coffee</a></div></div><div id="document"><div class="segment"><div class="comments"><div class="wrapper"><h1 id="model-service">Model Service</h1>
+
+<p>A simple class <code>Service</code> to represent services from a Nagios server.
+A service stores information for a server, such as the number of meetings
+running and the CPU load.</p></div></div><div class="code"><div class="wrapper"><span class="nv">Service = exports = module.exports = Service = </span><span class="nf">(name, data) -&gt;</span>
+  <span class="vi">@name = </span><span class="nx">name</span>
+  <span class="vi">@data = </span><span class="nx">data</span>
+  <span class="k">this</span></div></div></div><div class="segment"><div class="comments"><div class="wrapper"><p>Example:</p>
+
+<ul>
+<li>parses<code>meetings=2;5;10;0; ...</code> and returns <code>2</code>.</li>
+</ul></div></div><div class="code"><div class="wrapper"><span class="nv">Service::getIntSync = </span><span class="nf">(name) -&gt;</span>
+  <span class="nv">re = </span><span class="k">new</span> <span class="nb">RegExp</span><span class="p">(</span><span class="nx">name</span> <span class="o">+</span> <span class="s2">&quot;=(\\d+);&quot;</span><span class="p">)</span>
+  <span class="nb">parseInt</span> <span class="nx">@data</span><span class="p">.</span><span class="nx">match</span><span class="p">(</span><span class="nx">re</span><span class="p">)[</span><span class="mi">1</span><span class="p">]</span></div></div></div><div class="segment"><div class="comments"><div class="wrapper"><p>Example:</p>
+
+<ul>
+<li>changes <code>meetings=2;5;10;0; ...' to 'meeting=3;5;10;0; ...</code>.</li>
+</ul></div></div><div class="code"><div class="wrapper"><span class="nv">Service::setIntSync = </span><span class="nf">(name, value) -&gt;</span>
+  <span class="nv">re = </span><span class="k">new</span> <span class="nb">RegExp</span><span class="p">(</span><span class="nx">name</span> <span class="o">+</span> <span class="s2">&quot;=(\\d+);&quot;</span><span class="p">,</span> <span class="s2">&quot;g&quot;</span><span class="p">)</span>
+  <span class="nv">newValue = </span><span class="nx">name</span> <span class="o">+</span> <span class="s2">&quot;=&quot;</span> <span class="o">+</span> <span class="nx">value</span> <span class="o">+</span> <span class="s2">&quot;;&quot;</span>
+  <span class="vi">@data = </span><span class="nx">@data</span><span class="p">.</span><span class="nx">replace</span><span class="p">(</span><span class="nx">re</span><span class="p">,</span> <span class="nx">newValue</span><span class="p">)</span></div></div></div></div></body></html>

@@ -1,0 +1,53 @@
+<!DOCTYPE html><html lang="en"><head><title>models/meeting</title></head><meta http-equiv="Content-Type" content="text/html; charset=utf-8"><meta name="viewport" content="width=device-width, initial-scale=1.0, minimum-scale=1.0, maximum-scale=1.0"><meta name="groc-relative-root" content="../"><meta name="groc-document-path" content="models/meeting"><meta name="groc-project-path" content="models/meeting.coffee"><meta name="groc-github-url" content="https://github.com/mconf/mconf-bbb-lb"><link rel="stylesheet" type="text/css" media="all" href="../assets/style.css"><script type="text/javascript" src="../assets/behavior.js"></script><body><div id="meta"><div class="file-path"><a href="https://github.com/mconf/mconf-bbb-lb/blob/master/models/meeting.coffee">models/meeting.coffee</a></div></div><div id="document"><div class="segment"><div class="comments"><div class="wrapper"><h1 id="model-meeting">Model Meeting</h1>
+
+<p>Has a class <code>Meeting</code> to represent meetings and a database (a simple
+in-memory object) to store the meetings saved.</p></div></div><div class="code"><div class="wrapper"><span class="nv">fs = </span><span class="nx">require</span><span class="p">(</span><span class="s2">&quot;fs&quot;</span><span class="p">)</span>
+<span class="nv">Server = </span><span class="nx">require</span><span class="p">(</span><span class="s2">&quot;./server&quot;</span><span class="p">)</span></div></div></div><div class="segment"><div class="comments"><div class="wrapper"><p>The database of meetings.</p></div></div><div class="code"><div class="wrapper"><span class="nv">db = </span><span class="p">{}</span>
+
+<span class="nv">Meeting = exports = module.exports = Meeting = </span><span class="nf">(id, server, password) -&gt;</span>
+  <span class="vi">@id = </span><span class="nx">id</span>
+  <span class="vi">@server = </span><span class="nx">server</span></div></div></div><div class="segment"><div class="comments"><div class="wrapper"><p>We only need this password for the mobile client.
+See <code>routes/mobile.sendGetMeetingInfoToAll()</code>.</p></div></div><div class="code"><div class="wrapper">  <span class="vi">@password = </span><span class="nx">password</span>
+  <span class="k">this</span>
+
+<span class="nv">Meeting::saveSync = </span><span class="o">-&gt;</span>
+  <span class="nx">db</span><span class="p">[</span><span class="nx">@id</span><span class="p">]</span> <span class="o">=</span> <span class="k">this</span>
+  <span class="nx">db</span><span class="p">[</span><span class="nx">@id</span><span class="p">]</span>
+
+<span class="nv">Meeting::destroySync = </span><span class="o">-&gt;</span>
+  <span class="nx">exports</span><span class="p">.</span><span class="nx">destroySync</span> <span class="nx">@id</span>
+
+<span class="nv">Meeting.countSync = </span><span class="o">-&gt;</span>
+  <span class="nb">Object</span><span class="p">.</span><span class="nx">keys</span><span class="p">(</span><span class="nx">db</span><span class="p">).</span><span class="nx">length</span>
+
+<span class="nv">Meeting.getSync = </span><span class="nf">(id) -&gt;</span>
+  <span class="nx">db</span><span class="p">[</span><span class="nx">id</span><span class="p">]</span>
+
+<span class="nv">Meeting.allSync = </span><span class="o">-&gt;</span>
+  <span class="nv">arr = </span><span class="nb">Object</span><span class="p">.</span><span class="nx">keys</span><span class="p">(</span><span class="nx">db</span><span class="p">).</span><span class="nx">reduce</span><span class="p">(</span><span class="nf">(arr, id) -&gt;</span>
+    <span class="nx">arr</span><span class="p">.</span><span class="nx">push</span> <span class="nx">db</span><span class="p">[</span><span class="nx">id</span><span class="p">]</span>
+    <span class="nx">arr</span>
+  <span class="p">,</span> <span class="p">[])</span>
+  <span class="nx">arr</span>
+
+<span class="nv">Meeting.destroySync = </span><span class="nf">(id) -&gt;</span>
+  <span class="k">if</span> <span class="nx">db</span><span class="p">[</span><span class="nx">id</span><span class="p">]</span>
+    <span class="k">delete</span> <span class="nx">db</span><span class="p">[</span><span class="nx">id</span><span class="p">]</span>
+    <span class="kc">true</span>
+  <span class="k">else</span>
+    <span class="kc">false</span>
+
+<span class="nv">Meeting.clearSync = </span><span class="o">-&gt;</span>
+  <span class="k">for</span> <span class="nx">id</span> <span class="k">of</span> <span class="nx">db</span>
+    <span class="nv">item = </span><span class="nx">db</span><span class="p">[</span><span class="nx">id</span><span class="p">]</span>
+    <span class="k">delete</span> <span class="nx">item</span>
+  <span class="nv">db = </span><span class="p">{}</span></div></div></div><div class="segment"><div class="comments"><div class="wrapper"><p>Loads a json into the local database. For DEVELOPMENT only.</p></div></div><div class="code"><div class="wrapper"><span class="nv">Meeting.fromJsonSync = </span><span class="nf">(path) -&gt;</span>
+  <span class="k">try</span>
+    <span class="nv">fileContents = </span><span class="nx">fs</span><span class="p">.</span><span class="nx">readFileSync</span><span class="p">(</span><span class="nx">path</span><span class="p">,</span> <span class="s2">&quot;utf8&quot;</span><span class="p">)</span>
+    <span class="nv">json = </span><span class="nx">JSON</span><span class="p">.</span><span class="nx">parse</span><span class="p">(</span><span class="nx">fileContents</span><span class="p">)</span>
+    <span class="k">for</span> <span class="nx">idx</span> <span class="k">of</span> <span class="nx">json</span>
+      <span class="nv">s = </span><span class="k">new</span> <span class="nx">Server</span><span class="p">(</span><span class="nx">json</span><span class="p">[</span><span class="nx">idx</span><span class="p">].</span><span class="nx">server</span><span class="p">.</span><span class="nx">url</span><span class="p">,</span> <span class="nx">json</span><span class="p">[</span><span class="nx">idx</span><span class="p">].</span><span class="nx">server</span><span class="p">.</span><span class="nx">salt</span><span class="p">)</span>
+      <span class="nv">m = </span><span class="k">new</span> <span class="nx">Meeting</span><span class="p">(</span><span class="nx">json</span><span class="p">[</span><span class="nx">idx</span><span class="p">].</span><span class="nx">id</span><span class="p">,</span> <span class="nx">s</span><span class="p">)</span>
+      <span class="nx">m</span><span class="p">.</span><span class="nx">saveSync</span><span class="p">()</span>
+    <span class="nx">Logger</span><span class="p">.</span><span class="nx">log</span> <span class="s2">&quot;loaded data from &quot;</span> <span class="o">+</span> <span class="nx">path</span>
+    <span class="nx">Logger</span><span class="p">.</span><span class="nx">log</span> <span class="s2">&quot;meetings loaded: &quot;</span> <span class="o">+</span> <span class="nx">JSON</span><span class="p">.</span><span class="nx">stringify</span><span class="p">(</span><span class="nx">db</span><span class="p">)</span></div></div></div></div></body></html>

@@ -1,0 +1,75 @@
+<!DOCTYPE html><html lang="en"><head><title>models/server</title></head><meta http-equiv="Content-Type" content="text/html; charset=utf-8"><meta name="viewport" content="width=device-width, initial-scale=1.0, minimum-scale=1.0, maximum-scale=1.0"><meta name="groc-relative-root" content="../"><meta name="groc-document-path" content="models/server"><meta name="groc-project-path" content="models/server.coffee"><meta name="groc-github-url" content="https://github.com/mconf/mconf-bbb-lb"><link rel="stylesheet" type="text/css" media="all" href="../assets/style.css"><script type="text/javascript" src="../assets/behavior.js"></script><body><div id="meta"><div class="file-path"><a href="https://github.com/mconf/mconf-bbb-lb/blob/master/models/server.coffee">models/server.coffee</a></div></div><div id="document"><div class="segment"><div class="comments"><div class="wrapper"><h1 id="model-server">Model Server</h1>
+
+<p>Has a class <code>Server</code> to represent BigBlueButton servers and a
+database (a simple in-memory object) to store the servers saved.</p></div></div><div class="code"><div class="wrapper"><span class="nv">Logger = </span><span class="nx">require</span><span class="p">(</span><span class="s2">&quot;../lib/logger&quot;</span><span class="p">)</span>
+<span class="nv">Service = </span><span class="nx">require</span><span class="p">(</span><span class="s2">&quot;./service&quot;</span><span class="p">)</span>
+<span class="nv">config = </span><span class="nx">require</span><span class="p">(</span><span class="s2">&quot;../config&quot;</span><span class="p">)</span></div></div></div><div class="segment"><div class="comments"><div class="wrapper"><p>The database of servers.</p></div></div><div class="code"><div class="wrapper"><span class="nv">db = </span><span class="p">{}</span>
+
+<span class="nv">Server = exports = module.exports = Server = </span><span class="nf">(name, url, salt) -&gt;</span>
+  <span class="vi">@name = </span><span class="nx">name</span>
+  <span class="vi">@url = </span><span class="nx">url</span>
+  <span class="vi">@salt = </span><span class="nx">salt</span>
+  <span class="vi">@services = </span><span class="p">{}</span>
+  <span class="k">this</span>
+
+<span class="nv">Server::saveSync = </span><span class="o">-&gt;</span>
+  <span class="nx">db</span><span class="p">[</span><span class="nx">@name</span><span class="p">]</span> <span class="o">=</span> <span class="k">this</span>
+  <span class="nx">db</span><span class="p">[</span><span class="nx">@name</span><span class="p">]</span>
+
+<span class="nv">Server::destroySync = </span><span class="o">-&gt;</span>
+  <span class="nx">exports</span><span class="p">.</span><span class="nx">destroySync</span> <span class="nx">@name</span>
+
+<span class="nv">Server::updateServiceSync = </span><span class="nf">(name, data) -&gt;</span>
+  <span class="nv">service = </span><span class="nx">@services</span><span class="p">[</span><span class="nx">name</span><span class="p">]</span>
+  <span class="nv">service = </span><span class="k">new</span> <span class="nx">Service</span><span class="p">(</span><span class="nx">name</span><span class="p">,</span> <span class="nx">data</span><span class="p">)</span>  <span class="k">if</span> <span class="nx">service</span> <span class="o">is</span> <span class="o">`</span><span class="kc">undefined</span><span class="o">`</span>
+  <span class="nx">@services</span><span class="p">[</span><span class="nx">name</span><span class="p">]</span> <span class="o">=</span> <span class="nx">service</span>
+  <span class="nx">service</span></div></div></div><div class="segment"><div class="comments"><div class="wrapper"><p>Get the number of meetings in the server from the BBB service.</p></div></div><div class="code"><div class="wrapper"><span class="nv">Server::getMeetingCountSync = </span><span class="o">-&gt;</span>
+  <span class="nv">service = </span><span class="nx">@services</span><span class="p">[</span><span class="nx">config</span><span class="p">.</span><span class="nx">nagios</span><span class="p">.</span><span class="nx">bbbService</span><span class="p">]</span>
+  <span class="nv">count = </span><span class="o">-</span><span class="mi">1</span>
+  <span class="k">if</span> <span class="nx">service</span><span class="o">?</span>
+    <span class="k">try</span>
+      <span class="nv">count = </span><span class="nx">service</span><span class="p">.</span><span class="nx">getIntSync</span><span class="p">(</span><span class="s2">&quot;meetings&quot;</span><span class="p">)</span>
+    <span class="k">catch</span> <span class="nx">e</span>
+      <span class="nx">Logger</span><span class="p">.</span><span class="nx">error</span> <span class="s2">&quot;server &quot;</span> <span class="o">+</span> <span class="nx">@name</span> <span class="o">+</span> <span class="s2">&quot;, getting the number of meetings from: \&quot;&quot;</span> <span class="o">+</span> <span class="nx">service</span><span class="p">.</span><span class="nx">data</span> <span class="o">+</span> <span class="s2">&quot;\&quot;&quot;</span>
+  <span class="nx">count</span></div></div></div><div class="segment"><div class="comments"><div class="wrapper"><p>Increment the number of meetings described in the BBB service.</p></div></div><div class="code"><div class="wrapper"><span class="nv">Server::incMeetingCountSync = </span><span class="nf">(value) -&gt;</span>
+  <span class="nv">service = </span><span class="nx">@services</span><span class="p">[</span><span class="nx">config</span><span class="p">.</span><span class="nx">nagios</span><span class="p">.</span><span class="nx">bbbService</span><span class="p">]</span>
+  <span class="nv">count = </span><span class="mi">0</span>
+  <span class="k">if</span> <span class="nx">service</span><span class="o">?</span>
+    <span class="k">try</span>
+      <span class="nv">count = </span><span class="nx">service</span><span class="p">.</span><span class="nx">getIntSync</span><span class="p">(</span><span class="s2">&quot;meetings&quot;</span><span class="p">)</span>
+      <span class="nx">service</span><span class="p">.</span><span class="nx">setIntSync</span> <span class="s2">&quot;meetings&quot;</span><span class="p">,</span> <span class="nx">count</span> <span class="o">+</span> <span class="mi">1</span>
+    <span class="k">catch</span> <span class="nx">e</span>
+      <span class="nx">Logger</span><span class="p">.</span><span class="nx">error</span> <span class="s2">&quot;server &quot;</span> <span class="o">+</span> <span class="nx">@name</span> <span class="o">+</span> <span class="s2">&quot;, setting the number of meetings in: \&quot;&quot;</span> <span class="o">+</span> <span class="nx">service</span><span class="p">.</span><span class="nx">data</span> <span class="o">+</span> <span class="s2">&quot;\&quot;&quot;</span>
+
+<span class="nv">Server.countSync = </span><span class="o">-&gt;</span>
+  <span class="nb">Object</span><span class="p">.</span><span class="nx">keys</span><span class="p">(</span><span class="nx">db</span><span class="p">).</span><span class="nx">length</span>
+
+<span class="nv">Server.getSync = </span><span class="nf">(id) -&gt;</span>
+  <span class="nx">db</span><span class="p">[</span><span class="nx">id</span><span class="p">]</span>
+
+<span class="nv">Server.firstSync = </span><span class="o">-&gt;</span>
+  <span class="nv">keys = </span><span class="nb">Object</span><span class="p">.</span><span class="nx">keys</span><span class="p">(</span><span class="nx">db</span><span class="p">)</span>
+  <span class="k">if</span> <span class="nx">keys</span><span class="p">.</span><span class="nx">length</span> <span class="o">&gt;</span> <span class="mi">0</span>
+    <span class="nx">db</span><span class="p">[</span><span class="nx">keys</span><span class="p">[</span><span class="mi">0</span><span class="p">]]</span>
+  <span class="k">else</span>
+    <span class="kc">null</span>
+
+<span class="nv">Server.allSync = </span><span class="o">-&gt;</span>
+  <span class="nv">arr = </span><span class="nb">Object</span><span class="p">.</span><span class="nx">keys</span><span class="p">(</span><span class="nx">db</span><span class="p">).</span><span class="nx">reduce</span><span class="p">(</span><span class="nf">(arr, id) -&gt;</span>
+    <span class="nx">arr</span><span class="p">.</span><span class="nx">push</span> <span class="nx">db</span><span class="p">[</span><span class="nx">id</span><span class="p">]</span>
+    <span class="nx">arr</span>
+  <span class="p">,</span> <span class="p">[])</span>
+  <span class="nx">arr</span>
+
+<span class="nv">Server.destroySync = </span><span class="nf">(id) -&gt;</span>
+  <span class="k">if</span> <span class="nx">db</span><span class="p">[</span><span class="nx">id</span><span class="p">]</span>
+    <span class="k">delete</span> <span class="nx">db</span><span class="p">[</span><span class="nx">id</span><span class="p">]</span>
+    <span class="kc">true</span>
+  <span class="k">else</span>
+    <span class="kc">false</span>
+
+<span class="nv">Server.clearSync = </span><span class="o">-&gt;</span>
+  <span class="k">for</span> <span class="nx">id</span> <span class="k">of</span> <span class="nx">db</span>
+    <span class="nv">item = </span><span class="nx">db</span><span class="p">[</span><span class="nx">id</span><span class="p">]</span>
+    <span class="k">delete</span> <span class="nx">item</span>
+  <span class="nv">db = </span><span class="p">{}</span></div></div></div></div></body></html>
