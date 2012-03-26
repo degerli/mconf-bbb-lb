@@ -44,13 +44,24 @@ We use [groc](https://github.com/nevir/groc) to generate the documentation. Comm
 Deployment
 ----------
 
-Download and install [Node.js](http://nodejs.org/).
+_(Note: in Ubuntu)_
 
-Global packages:
+In your server, download and install [Node.js](http://nodejs.org/). You can [install from source](https://github.com/joyent/node/wiki/Installation) or [via package manager](https://github.com/joyent/node/wiki/Installing-Node.js-via-package-manager).
+
+Install global packages (`x.x.x` is the version to be installed, see `package.json`):
 
     sudo npm install -g coffee-script@x.x.x forever@x.x.x
 
-// TODO Install and configure Nginx.
+Install Nginx and then configure it:
+
+    sudo vim /etc/nginx/sites-available/mconf_bbb_lb
+    # Paste inside the contents of 'config/nginx.example' and save it.
+    # Don't forget to read it, you have to set at least your domain/IP in the proper location.
+
+    sudo rm /etc/nginx/sites-enabled/*
+    sudo ln -s /etc/nginx/sites-available/mconf_bbb_lb /etc/nginx/sites-enabled/mconf_bbb_lb
+
+    sudo /etc/init.d/nginx restart # to test it
 
 From now on you can either use Capistrano to deploy the application or do it manually.
 
@@ -65,10 +76,14 @@ Copy the deployment config file and edit it:
 
 Make sure that the user configured in `config/deploy/conf.yml` exists and has permission to `sudo`.
 
-Deploy:
+First setup:
 
     cap deploy:setup
+
+Then deploy:
+
     cap deploy:update
+    cap deploy:restart
 
 More about Mconf
 ----------------

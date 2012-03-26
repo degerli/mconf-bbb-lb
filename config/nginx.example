@@ -1,0 +1,20 @@
+# References:
+# http://wellconsidered.be/post/10519707671/node-js-on-nginx
+# http://stackoverflow.com/questions/5009324/node-js-nginx-and-now
+
+upstream mconf_bbb_lb {
+  server 127.0.0.1:3000;
+}
+server {
+  listen 80;
+  server_name www.yoursite.com;
+
+  location / {
+    proxy_set_header X-Real-IP $remote_addr;
+    proxy_set_header X-Forwarded-For $proxy_add_x_forwarded_for;
+    proxy_set_header Host $http_host;
+    proxy_set_header X-NginX-Proxy true;
+    proxy_pass http://mconf_bbb_lb/;
+    proxy_redirect off;
+  }
+}

@@ -7,7 +7,7 @@ fs = require("fs")
 try
   fs.statSync "./config_local.coffee"
 catch e
-  console.log "ERROR: You don't have a config_local.js file. Aborting."
+  console.log "ERROR: You don't have a config_local.coffee file. Aborting."
   console.log "       Create it with \"cp config_local.coffee.example config_local.coffee\""
   process.exit 1
 
@@ -22,7 +22,7 @@ config.lb.requestTimeout = 10000 # max wait = 10sec
 config.nagios = config.nagios or {}
 config.nagios.apiPath = "/cgi-bin/status-json.cgi"
 config.nagios.auth = "HTTPBasic" # set to null for no auth
-config.nagios.interval = 2000000 # in ms
+config.nagios.interval = 20000 # in ms
 config.nagios.defaultServer = "mconf.org"
 config.nagios.bbbService = "BigBlueButton Info"
 config.nagios.services = [ "BigBlueButton Info", "Network Report", "Processor Report", "Memory Report" ]

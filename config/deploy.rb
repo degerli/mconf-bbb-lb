@@ -1,6 +1,11 @@
 # Current versions being used:
 # ruby 1.9.2-p290
 # capistrano 2.11.2
+#
+# References:
+# https://gist.github.com/1073903
+# http://blog.railwayjs.com/11-capistrano-deploy-nodejs
+# https://github.com/jamescarr/node-capistrano-script
 
 # Read the configuration file and set it in capistrano
 CONFIG_FILE = File.join(File.dirname(__FILE__), "deploy", "conf.yml")
@@ -12,36 +17,50 @@ role :db, fetch(:server), :primary => true
 
 default_run_options[:pty] = true
 set :normalize_asset_timestamps, false
+set :stage, "production"
 
 namespace :deploy do
   desc "Prints information about the selected stage"
   task :info do
     puts
     puts "*****************************************************************"
-    puts "       server: #{ fetch(:server) }"
-    puts "       branch: #{ fetch(:branch) }"
-    puts "   repository: #{ fetch(:repository) }"
-    puts "  application: #{ fetch(:application) }"
-    puts " release path: #{ release_path }"
+    puts "       server: #{fetch(:server)}"
+    puts "       branch: #{fetch(:branch)}"
+    puts "   repository: #{fetch(:repository)}"
+    puts "  application: #{fetch(:application)}"
+    puts " release path: #{release_path}"
     puts "*****************************************************************"
     puts
   end
 
-  desc "Stop Forever"
+  desc "Stop the application"
   task :stop, :roles => :app do
+    run "#{try_sudo} /etc/init.d/nginx stop"
     run "cd #{current_path} && forever stop app.js"
   end
 
-  desc "Start Forever"
+  desc "Start the application"
   task :start, :roles => :app do
-    run "cd #{current_path} && forever start app.js"
+    run "cd #{current_path} && NODE_ENV=#{stage} forever start app.js"
+    run "#{try_sudo} /etc/init.d/nginx start"
   end
 
-  desc "Restart Forever"
+  desc "Restart the application"
   task :restart, :roles => :app do
     stop
     sleep 5
     start
+    status
+  end
+
+  desc "Print the status of the process using Forever"
+  task :status, :roles => :app do
+    run "cd #{current_path} && forever list"
+  end
+
+  desc "Print the last 100 in the logfile"
+  task :log, :roles => :app do
+    run "cd #{current_path} && forever logs app.js"
   end
 
   task :config_setup, :roles => :app do
@@ -69,5 +88,5 @@ after "deploy:setup", "deploy:config_setup"
 after "deploy:update", "deploy:refresh_symlink"
 after "deploy:update", "deploy:npm_install"
 after "deploy:update", "deploy:upload_config_files"
-after "deploy:update", "deploy:restart"
+after "deploy:update", "deploy:status"
 on :start, "deploy:info"
