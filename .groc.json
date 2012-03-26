@@ -1,5 +1,4 @@
 {
   "glob": ["README.md", "*.coffee", "lib/**/*.coffee", "models/**/*.coffee", "routes/**/*.coffee", "views/**/*.jade"],
-  "index": "README.md",
-  "github": true
+  "index": "README.md"
 }

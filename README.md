@@ -32,6 +32,15 @@ Run the server:
 
     node app.js
 
+
+### Documentation
+
+We use [groc](https://github.com/nevir/groc) to generate the documentation. Commands:
+
+    groc
+    groc --github # to update the docs in gh-pages
+
+
 Deployment
 ----------
 
