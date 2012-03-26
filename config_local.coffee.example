@@ -1,13 +1,11 @@
-# TODO: might be better to make this a json file
-
 config = {}
 
-// Private information: this file is not public in the github repo so it
-// can be used to store private information
+# Private information: this file is not public in the github repo so it
+# can be used to store private information
 
 config.lb = {}
-config.lb.salt = "1234567890abcdefghij1234567890ab"
-config.lb.mobileSalt = "03b07"
+config.lb.salt = '1234567890abcdefghij1234567890ab'
+config.lb.mobileSalt = '03b07'
 
 config.nagios = {}
 config.nagios.url = 'http://192.168.0.100/nagios'

@@ -1,0 +1,18 @@
+# This file contains configurations used in the deployment.
+#
+# deploy.rb loads this file and sets it in capistrano.
+#
+# You can redefine here pretty much any variable available to Capistrano and it will
+# override the default values set in deploy.rb.
+#
+# For more about Capistrano see: https://github.com/capistrano/capistrano
+# Available variables: https://github.com/capistrano/capistrano/wiki/2.x-Significant-Configuration-Variables
+# For more about multistage see: https://github.com/capistrano/capistrano/wiki/2.x-Multistage-Extension
+
+server: "my-server-or-ip.com"
+branch: "production"
+application: "mconf-bbb-lb"
+repository: "git://github.com/mconf/mconf-bbb-lb.git"
+scm: "git"
+deploy_to: "/var/www/mconf-bbb-lb"
+user: "mconf"

@@ -1,5 +1,3 @@
-# TODO: document the methods and args, specially those with callbacks
-
 BigBlueButton = require("./lib/bigbluebutton")
 Logger = require("./lib/logger")
 Meeting = require("./models/meeting")
